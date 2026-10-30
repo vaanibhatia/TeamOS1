@@ -11,6 +11,7 @@ import {
   Sparkles,
   Command,
 } from 'lucide-react';
+import SyncoraLogo from './SyncoraLogo';
 
 export default function Navbar({
   currentRole = 'manager',
@@ -66,13 +67,11 @@ export default function Navbar({
           {/* Left: Brand Logo & Workspace Info */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-brand-500/20 text-white font-bold tracking-tight">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
+              <SyncoraLogo className="w-9 h-9" />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-lg tracking-tight text-surface-900 dark:text-white">
-                    Team<span className="text-brand-500">OS</span>
+                    Syncora
                   </span>
                   <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950/70 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                     v1.0

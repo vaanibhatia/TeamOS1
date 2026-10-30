@@ -12,6 +12,7 @@ import {
   FileText,
   UserCheck,
 } from 'lucide-react';
+import SyncoraLogo from './SyncoraLogo';
 import { mockUsers, mockEmployees } from '../api/mockData';
 
 export default function RoleSelection({ onSelectRole = () => {} }) {
@@ -80,13 +81,11 @@ export default function RoleSelection({ onSelectRole = () => {} }) {
       {/* Top Brand Bar */}
       <div className="max-w-6xl w-full mx-auto flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-brand-500/25 text-white">
-            <Layers className="w-5 h-5 text-white" />
-          </div>
+          <SyncoraLogo className="w-10 h-10" />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-xl tracking-tight text-surface-900 dark:text-white">
-                Team<span className="text-brand-500">OS</span>
+                Syncora
               </span>
               <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950/70 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                 v1.0
@@ -115,7 +114,7 @@ export default function RoleSelection({ onSelectRole = () => {} }) {
             Choose Your Workspace
           </h1>
           <p className="mt-3 text-sm sm:text-base text-surface-600 dark:text-surface-400 leading-relaxed">
-            TeamOS tailors meeting intelligence, task triage, and evidence tracking to your role. Select a workspace to begin.
+            Syncora tailors meeting intelligence, task triage, and evidence tracking to your role. Select a workspace to begin.
           </p>
         </div>
 
@@ -203,7 +202,7 @@ export default function RoleSelection({ onSelectRole = () => {} }) {
       {/* Footer */}
       <footer className="max-w-6xl w-full mx-auto py-4 border-t border-surface-200 dark:border-surface-800 flex flex-col sm:flex-row items-center justify-between text-xs text-surface-400 gap-2">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-surface-700 dark:text-surface-300">TeamOS Platform</span>
+          <span className="font-semibold text-surface-700 dark:text-surface-300">Syncora Platform</span>
           <span>•</span>
           <span>Technical Contract v1.0 Compliant</span>
         </div>

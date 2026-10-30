@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="24" fill="#0F172A" />
+  <g transform="translate(50, 50)">
+    <!-- Blue Petal (Left / ~282deg) -->
+    <path
+      d="M 0 0 C -12 -7, -17 -21, -6 -34 C -2 -38, 2 -38, 6 -34 C 17 -21, 12 -7, 0 0 Z"
+      fill="#4F55F8"
+      transform="rotate(-78)"
+    />
+    <!-- Purple Petal (Top-Right / ~42deg) -->
+    <path
+      d="M 0 0 C -12 -7, -17 -21, -6 -34 C -2 -38, 2 -38, 6 -34 C 17 -21, 12 -7, 0 0 Z"
+      fill="#7865FA"
+      transform="rotate(42)"
+    />
+    <!-- Turquoise / Mint Petal (Bottom / ~162deg) -->
+    <path
+      d="M 0 0 C -12 -7, -17 -21, -6 -34 C -2 -38, 2 -38, 6 -34 C 17 -21, 12 -7, 0 0 Z"
+      fill="#20D6B5"
+      transform="rotate(162)"
+    />
+  </g>
+</svg>

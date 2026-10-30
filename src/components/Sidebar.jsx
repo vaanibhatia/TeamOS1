@@ -21,6 +21,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { mockUsers } from '../api/mockData';
+import SyncoraLogo from './SyncoraLogo';
 
 export default function Sidebar({
   currentRole = 'manager',
@@ -104,13 +105,11 @@ export default function Sidebar({
               onClick={() => onNavigate('home')}
               className="flex items-center gap-2.5 cursor-pointer group"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-                <Layers className="w-4 h-4 text-white" />
-              </div>
+              <SyncoraLogo className="w-8 h-8" />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-base tracking-tight text-surface-900 dark:text-white">
-                    Team<span className="text-brand-500">OS</span>
+                    Syncora
                   </span>
                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-50 text-brand-600 dark:bg-brand-950/70 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                     v1.0

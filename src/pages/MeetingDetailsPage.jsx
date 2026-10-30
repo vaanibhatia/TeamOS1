@@ -197,7 +197,7 @@ export default function MeetingDetailsPage({
             </h2>
           </div>
           <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300">
-            Synthesized by TeamOS Intelligence
+            Synthesized by Syncora Intelligence
           </span>
         </div>
 

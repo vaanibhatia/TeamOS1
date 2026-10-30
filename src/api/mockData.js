@@ -1,5 +1,5 @@
 /**
- * TeamOS Mock Data - Adhering strictly to Technical Contract v1.0
+ * Syncora Mock Data - Adhering strictly to Technical Contract v1.0
  * Provides mock users, employees, meetings, transcript segments, and shared task records.
  */
 
@@ -9,7 +9,7 @@ export const mockUsers = {
     name: "Sarah Jenkins",
     role: "manager",
     title: "Engineering Lead",
-    email: "sarah.jenkins@teamos.ai",
+    email: "sarah.jenkins@syncora.ai",
     avatar: "SJ",
     color: "from-indigo-600 to-blue-500",
   },
@@ -18,7 +18,7 @@ export const mockUsers = {
     name: "Rahul Sharma",
     role: "employee",
     title: "Senior Frontend Engineer",
-    email: "rahul@teamos.local",
+    email: "rahul@syncora.local",
     avatar: "RS",
     color: "from-emerald-600 to-teal-500",
   },
@@ -27,7 +27,7 @@ export const mockUsers = {
     name: "Priya Patel",
     role: "employee",
     title: "Backend Systems Engineer",
-    email: "priya@teamos.local",
+    email: "priya@syncora.local",
     avatar: "PP",
     color: "from-amber-600 to-orange-500",
   },
@@ -48,7 +48,7 @@ export const mockEmployees = [
     name: "Rahul Sharma",
     role: "employee",
     title: "Senior Frontend Engineer",
-    email: "rahul@teamos.local",
+    email: "rahul@syncora.local",
     avatar: "RS",
   },
   {
@@ -56,7 +56,7 @@ export const mockEmployees = [
     name: "Priya Patel",
     role: "employee",
     title: "Backend Systems Engineer",
-    email: "priya@teamos.local",
+    email: "priya@syncora.local",
     avatar: "PP",
   },
 ];

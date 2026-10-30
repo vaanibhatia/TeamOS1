@@ -1,16 +1,16 @@
-# TeamOS Dashboard
+# Syncora Dashboard
 
-A clean, modern React + Tailwind CSS dashboard shell for **TeamOS** built with Vite and pure JavaScript.
+A clean, modern React + Tailwind CSS dashboard shell for **Syncora** built with Vite and pure JavaScript.
 
 ## Features & Highlights
 
 - **Pure JavaScript & React 18**: Zero TypeScript compilation overhead, fully modern functional React with hooks.
 - **Tailwind CSS & Lucide Icons**: Tailored dark/light neutral palette suitable for high-focus engineering productivity.
 - **Technical Contract v1.0 Mock Data**:
-  - `mockEmployees`: Registered team members with ID, name, role, email (`rahul@teamos.local`, `priya@teamos.local`).
+  - `mockEmployees`: Registered team members with ID, name, role, email (`rahul@syncora.local`, `priya@syncora.local`).
   - `mockMeeting`: Extracted meeting model (`meet_001`), title "Sprint 1 Architecture & Milestones", 3 transcript segments with evidence IDs, decisions, open questions, and status-tracked tasks.
 - **Top Navigation Bar (`Navbar.jsx`)**:
-  - TeamOS brand logo with version badge.
+  - Syncora brand logo with version badge.
   - Interactive Meeting Dropdown Selector displaying "Sprint 1 Architecture & Milestones" with metadata flyout.
   - Mode Switcher Tabs for **[Manager View]**, **[Employee View]**, and **[Student View]**.
 - **Slide-over Evidence Drawer (`EvidenceDrawer.jsx`)**:

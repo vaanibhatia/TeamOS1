@@ -105,8 +105,8 @@ export default function TopBar({
 
           {/* Breadcrumb Path */}
           <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs">
-            <span className="font-extrabold text-surface-900 dark:text-white flex items-center gap-1">
-              <span className="text-brand-500">Team</span>OS
+            <span className="font-extrabold text-surface-900 dark:text-white">
+              Syncora
             </span>
             <span className="text-surface-300 dark:text-surface-600">/</span>
             <span className="font-semibold text-surface-600 dark:text-surface-300 capitalize">

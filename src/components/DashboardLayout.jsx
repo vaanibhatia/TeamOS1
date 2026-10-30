@@ -61,7 +61,7 @@ export default function DashboardLayout({
           <footer className="border-t border-surface-200 dark:border-surface-800 py-4 px-4 sm:px-6 lg:px-8 mt-auto bg-white/50 dark:bg-surface-900/50">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-surface-400 gap-2">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-surface-700 dark:text-surface-300">TeamOS Platform</span>
+                <span className="font-semibold text-surface-700 dark:text-surface-300">Syncora Platform</span>
                 <span>•</span>
                 <span>Technical Contract v1.0 Compliant</span>
               </div>

@@ -48,7 +48,7 @@ export default function StudentView({
     },
     {
       id: 'item_4',
-      text: 'Compare TeamOS Technical Contract v1.0 data schemas with database model',
+      text: 'Compare Syncora Technical Contract v1.0 data schemas with database model',
       completed: false,
     },
   ]);
