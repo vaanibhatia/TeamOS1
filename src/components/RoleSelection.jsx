@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import SyncoraLogo from './SyncoraLogo';
 
-export default function RoleSelection({ onSelectRole = () => {} }) {
+export default function RoleSelection({ onSelectRole = () => {}, onBack = null }) {
   const roles = [
     {
       id: 'manager',
@@ -82,6 +82,15 @@ export default function RoleSelection({ onSelectRole = () => {} }) {
             </p>
           </div>
         </div>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors border border-surface-200 dark:border-surface-700 cursor-pointer"
+          >
+            <span>&larr;</span>
+            <span>Back</span>
+          </button>
+        )}
       </div>
 
       {/* Main Selection Area */}

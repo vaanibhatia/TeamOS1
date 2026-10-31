@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LandingPage from './pages/LandingPage';
 import RoleSelection from './components/RoleSelection';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './components/DashboardLayout';
@@ -72,7 +73,14 @@ export default function App() {
   const [activeEmployeeId, setActiveEmployeeId] = useState('usr_001');
 
   // 3. Navigation View State
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('syncora_user') || localStorage.getItem('syncora_auth');
+      return savedUser ? 'home' : 'landing';
+    } catch (e) {
+      return 'landing';
+    }
+  });
 
   // 4. SHARED UNDERLYING TASK RECORDS (Manager & Employee workspace single source of truth)
   const [tasks, setTasks] = useState(initialTasks);
@@ -132,7 +140,7 @@ export default function App() {
     setCurrentRole(null);
     setCurrentUser(null);
     setAuthRole(null);
-    setCurrentView('home');
+    setCurrentView('landing');
   };
 
   // Handler to select and view a meeting
@@ -183,8 +191,16 @@ export default function App() {
     studentCompleted: studentTasks.filter((t) => t.status === 'completed').length,
   };
 
-  // Flow Transition: Role Selection -> Dedicated Full-Page Login -> Dashboard
+  // Flow Transition: Landing Page -> Workspaces (Role Selection) -> Dedicated Full-Page Login -> Dashboard
   if (!currentRole) {
+    if (currentView === 'landing') {
+      return (
+        <LandingPage
+          onContinue={() => setCurrentView('workspaces')}
+        />
+      );
+    }
+
     if (authRole) {
       return (
         <LoginPage
@@ -199,7 +215,13 @@ export default function App() {
         />
       );
     }
-    return <RoleSelection onSelectRole={(roleId) => setAuthRole(roleId)} />;
+
+    return (
+      <RoleSelection
+        onSelectRole={(roleId) => setAuthRole(roleId)}
+        onBack={() => setCurrentView('landing')}
+      />
+    );
   }
 
   return (
