@@ -79,6 +79,7 @@ export default function TopBar({
     'dev-graph': 'Project & Architecture Dependency Graph',
     'dev-kanban': 'Engineering Code Task Board',
     'dev-blockers': 'Technical Blocker & Ambiguity Radar',
+    discussions: 'Team Discussions & Clarifications',
     'employee-pending': 'My Pending Tasks',
     'employee-in-progress': 'In Progress Tasks',
     'employee-completed': 'Completed Tasks',

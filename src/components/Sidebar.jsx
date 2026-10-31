@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layers,
   Home,
@@ -20,6 +20,7 @@ import {
   GitCommit,
   Bookmark,
   Terminal,
+  MessageSquare,
 } from 'lucide-react';
 import { mockUsers } from '../api/mockData';
 import SyncoraLogo from './SyncoraLogo';
@@ -46,6 +47,36 @@ export default function Sidebar({
 }) {
   const currentUser = passedUser || mockUsers[currentRole] || mockUsers.manager;
 
+  // Active threads count from localStorage
+  const [discussionCount, setDiscussionCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('syncora_discussions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const openThreads = parsed.filter((t) => t.status === 'open');
+          return openThreads.length || parsed.length;
+        }
+      }
+    } catch {}
+    return 2;
+  });
+
+  // Keep discussionCount reactive to local storage updates
+  useEffect(() => {
+    const handleDiscussionsUpdated = (event) => {
+      const list = event?.detail || [];
+      if (Array.isArray(list)) {
+        const openThreads = list.filter((t) => t.status === 'open');
+        setDiscussionCount(openThreads.length || list.length);
+      }
+    };
+    window.addEventListener('syncora_discussions_updated', handleDiscussionsUpdated);
+    return () => {
+      window.removeEventListener('syncora_discussions_updated', handleDiscussionsUpdated);
+    };
+  }, []);
+
   const roleLabels = {
     manager: { label: 'Manager Workspace', badge: 'Leadership', icon: Briefcase, color: 'text-indigo-500' },
     employee: { label: 'Employee Workspace', badge: 'Execution', icon: Users, color: 'text-emerald-500' },
@@ -67,6 +98,7 @@ export default function Sidebar({
       { id: 'manager-approvals', label: 'Needs Approval', icon: AlertCircle, count: counts.needsApproval, highlight: counts.needsApproval > 0 },
       { id: 'manager-add-task', label: 'Add Task', icon: PlusCircle, isAction: true },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
+      { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'employee') {
     navItems = [
@@ -76,21 +108,24 @@ export default function Sidebar({
       { id: 'employee-completed', label: 'Completed Tasks', icon: CheckCircle2 },
       { id: 'employee-blocked', label: 'Blocked Tasks', icon: AlertTriangle, count: counts.employeeBlocked, danger: counts.employeeBlocked > 0 },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
+      { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'student') {
-    // Student Workspace: strictly Home, My Tasks, Completed Tasks
+    // Student Workspace: strictly Home, My Tasks, Completed Tasks, Discussions
     navItems = [
       { id: 'home', label: 'Home', icon: Home },
       { id: 'student-tasks', label: 'My Tasks', icon: Bookmark, count: counts.studentPending },
       { id: 'student-completed', label: 'Completed Tasks', icon: CheckCircle2, count: counts.studentCompleted },
+      { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'developer') {
-    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar
+    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar, Discussions
     navItems = [
       { id: 'home', label: 'Developer Board', icon: Terminal },
       { id: 'dev-graph', label: 'Dependency Graph', icon: GitCommit },
       { id: 'dev-kanban', label: 'Code Task Board', icon: CheckSquare },
       { id: 'dev-blockers', label: 'Blocker Radar', icon: AlertTriangle, count: 2, danger: true },
+      { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
       { id: 'meetings', label: 'Engineering Syncs', icon: Calendar },
     ];
   }

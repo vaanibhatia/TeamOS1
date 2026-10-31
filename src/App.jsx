@@ -12,6 +12,7 @@ import DeveloperDashboard from './pages/DeveloperDashboard';
 import TaskDependencyGraph from './components/TaskDependencyGraph';
 import AddTaskModal from './components/AddTaskModal';
 import EvidenceDrawer from './components/EvidenceDrawer';
+import DiscussionBoard from './components/DiscussionBoard';
 import {
   mockMeetings,
   mockEmployees,
@@ -385,6 +386,14 @@ export default function App() {
           subView={currentView}
           onOpenEvidence={handleOpenEvidence}
           onSelectMeeting={handleSelectMeeting}
+        />
+      )}
+
+      {/* 9. TEAM DISCUSSIONS & CLARIFICATIONS (Shared across all roles) */}
+      {currentView === 'discussions' && (
+        <DiscussionBoard
+          currentRole={currentRole}
+          currentUser={currentUser}
         />
       )}
 
