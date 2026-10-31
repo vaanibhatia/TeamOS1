@@ -354,25 +354,50 @@ export function extractFileSymbols(filePath, content, ext, layer) {
   return symbols;
 }
 
-// Extract imported dependencies in a file
-export function extractFileImports(content) {
-  const imports = new Set();
-  const importRegex = /import\s+(?:\{[^}]+\}|[A-Za-z0-9_]+|\*\s+as\s+[A-Za-z0-9_]+)\s+from\s+['"]([^'"]+)['"]/g;
-  let match;
-  while ((match = importRegex.exec(content)) !== null) {
-    imports.add(match[1]);
-  }
-  const reqRegex = /require\(['"]([^'"]+)['"]\)/g;
-  while ((match = reqRegex.exec(content)) !== null) {
-    imports.add(match[1]);
-  }
-  return Array.from(imports);
-}
 
 // =============================================================================
 // REAL IN-BROWSER CODE ANALYZER
 // =============================================================================
-export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onProgress = () => {}) {
+// Extract imported dependencies in a file
+export function extractFileImports(content) {
+  const imports = new Set();
+  let match;
+
+  // Standard imports and side-effect imports
+  const importRegex =
+    /\bimport\s+(?:[^'"]*?\s+from\s*)?['"]([^'"]+)['"]/g;
+
+  while ((match = importRegex.exec(content)) !== null) {
+    imports.add(match[1]);
+  }
+
+  // Re-exports
+  const exportRegex =
+    /\bexport\s+(?:\*|\{[^}]*\})\s+from\s*['"]([^'"]+)['"]/g;
+
+  while ((match = exportRegex.exec(content)) !== null) {
+    imports.add(match[1]);
+  }
+
+  // Dynamic imports
+  const dynamicRegex =
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+
+  while ((match = dynamicRegex.exec(content)) !== null) {
+    imports.add(match[1]);
+  }
+
+  // CommonJS require
+  const requireRegex =
+    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+
+  while ((match = requireRegex.exec(content)) !== null) {
+    imports.add(match[1]);
+  }
+
+  return Array.from(imports);
+}
+export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onProgress = () => { }) {
   onProgress(1, 'Reading project files and unpacking directory layout...', 15);
 
   let zip;
@@ -1377,41 +1402,83 @@ export function deriveCodebaseGraph(analysisData) {
   });
 
   // 5. Build dynamic directed Bezier edges based on real imports & dependencies
-  const nodeByPath = new Map();
-  const nodeByName = new Map();
-  for (const n of layoutNodes) {
-    nodeByPath.set(n.path.toLowerCase(), n);
-    const baseName = n.name.toLowerCase().replace(/\.[^.]+$/, '');
-    if (!nodeByName.has(baseName)) {
-      nodeByName.set(baseName, n);
+  // 5. Build edges using actual file imports
+  const normalizePath = (filePath) => {
+    const parts = filePath.replace(/\\/g, '/').split('/');
+    const result = [];
+
+    for (const part of parts) {
+      if (!part || part === '.') continue;
+
+      if (part === '..') {
+        result.pop();
+      } else {
+        result.push(part);
+      }
     }
+
+    return result.join('/').toLowerCase();
+  };
+
+  // Create a lookup map using normalized file paths
+  const nodeByPath = new Map();
+
+  for (const node of layoutNodes) {
+    nodeByPath.set(normalizePath(node.path), node);
   }
 
   const edges = [];
   const seenEdges = new Set();
 
+  const extensions = [
+    '.js',
+    '.jsx',
+    '.ts',
+    '.tsx',
+    '.mjs',
+    '.cjs',
+    '.json',
+  ];
+
   for (const src of layoutNodes) {
     for (const imp of src.imports || []) {
-      const cleanImp = imp.toLowerCase().replace(/^\.\.?\//, '').replace(/\.[^.]+$/, '');
-      const impParts = cleanImp.split('/');
-      const impBase = impParts[impParts.length - 1];
+      // Resolve relative imports only
+      if (!imp.startsWith('./') && !imp.startsWith('../')) {
+        continue;
+      }
+
+      const sourceDir = src.path
+        .replace(/\\/g, '/')
+        .split('/')
+        .slice(0, -1)
+        .join('/');
+
+      const basePath = normalizePath(`${sourceDir}/${imp}`);
+
+      // Try exact path, extensions, and index files
+      const candidates = [basePath];
+
+      for (const ext of extensions) {
+        candidates.push(`${basePath}${ext}`);
+        candidates.push(`${basePath}/index${ext}`);
+      }
 
       let target = null;
-      if (nodeByName.has(impBase)) {
-        target = nodeByName.get(impBase);
-      } else {
-        for (const [p, n] of nodeByPath.entries()) {
-          if (p.includes(cleanImp) || p.endsWith(`${impBase}.${n.ext}`)) {
-            target = n;
-            break;
-          }
+
+      for (const candidate of candidates) {
+        if (nodeByPath.has(candidate)) {
+          target = nodeByPath.get(candidate);
+          break;
         }
       }
 
+      // Add an edge only when a real imported file is found
       if (target && target.id !== src.id) {
         const edgeId = `edge-${src.id}-${target.id}`;
+
         if (!seenEdges.has(edgeId)) {
           seenEdges.add(edgeId);
+
           edges.push({
             id: edgeId,
             from: src.id,
@@ -1420,27 +1487,6 @@ export function deriveCodebaseGraph(analysisData) {
             toPath: target.path,
             label: 'imports',
             type: 'import',
-          });
-        }
-      }
-    }
-
-    if (src.isEntryPoint && edges.filter((e) => e.from === src.id).length === 0) {
-      const nextGroupNodes = layoutNodes.filter(
-        (n) => n.groupId !== src.groupId && (n.layer === 'ui' || n.layer === 'api')
-      );
-      for (const tgt of nextGroupNodes.slice(0, 3)) {
-        const edgeId = `edge-${src.id}-${tgt.id}`;
-        if (!seenEdges.has(edgeId)) {
-          seenEdges.add(edgeId);
-          edges.push({
-            id: edgeId,
-            from: src.id,
-            to: tgt.id,
-            fromPath: src.path,
-            toPath: tgt.path,
-            label: 'initiates',
-            type: 'entry',
           });
         }
       }
