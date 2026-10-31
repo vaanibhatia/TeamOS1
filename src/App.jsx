@@ -13,6 +13,10 @@ import TaskDependencyGraph from './components/TaskDependencyGraph';
 import AddTaskModal from './components/AddTaskModal';
 import EvidenceDrawer from './components/EvidenceDrawer';
 import DiscussionBoard from './components/DiscussionBoard';
+import ProjectTimeline from './pages/ProjectTimeline';
+import ProjectArchitectureView from './pages/ProjectArchitectureView';
+import SolutionView from './pages/SolutionView';
+import { ArchitectureProvider } from './context/ArchitectureContext';
 import {
   mockMeetings,
   mockEmployees,
@@ -199,26 +203,27 @@ export default function App() {
   }
 
   return (
-    <DashboardLayout
-      currentRole={currentRole}
-      currentUser={currentUser}
-      currentView={currentView}
-      onNavigate={setCurrentView}
-      onSwitchRole={handleLogout}
-      onLogout={handleLogout}
-      selectedMeetingId={selectedMeetingId}
-      onSelectMeeting={handleSelectMeeting}
-      meetings={currentRole === 'student' ? studentMeetings : meetings}
-      searchQuery={searchQuery}
-      onSearchChange={(q) => {
-        setSearchQuery(q);
-        if (q && currentView !== 'meetings') {
-          setCurrentView('meetings');
-        }
-      }}
-      onOpenAddTask={() => setIsAddTaskModalOpen(true)}
-      counts={sidebarCounts}
-    >
+    <ArchitectureProvider>
+      <DashboardLayout
+        currentRole={currentRole}
+        currentUser={currentUser}
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        onSwitchRole={handleLogout}
+        onLogout={handleLogout}
+        selectedMeetingId={selectedMeetingId}
+        onSelectMeeting={handleSelectMeeting}
+        meetings={currentRole === 'student' ? studentMeetings : meetings}
+        searchQuery={searchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          if (q && currentView !== 'meetings') {
+            setCurrentView('meetings');
+          }
+        }}
+        onOpenAddTask={() => setIsAddTaskModalOpen(true)}
+        counts={sidebarCounts}
+      >
       {/* 1. Common Homepage View */}
       {currentView === 'home' && currentRole !== 'developer' && (
         <HomePage
@@ -397,6 +402,26 @@ export default function App() {
         />
       )}
 
+      {/* 10. PROJECT TIMELINE (Visual Roadmap & Milestones) */}
+      {currentView === 'timeline' && (
+        <ProjectTimeline
+          currentRole={currentRole}
+          currentUser={currentUser}
+          onOpenEvidence={handleOpenEvidence}
+          onSelectMeeting={handleSelectMeeting}
+        />
+      )}
+
+      {/* 11. PROJECT ARCHITECTURE (Developer Mode Only) */}
+      {currentRole === 'developer' && currentView === 'project-architecture' && (
+        <ProjectArchitectureView onNavigate={setCurrentView} />
+      )}
+
+      {/* 12. SOLUTION VIEW (Developer Mode Only) */}
+      {currentRole === 'developer' && currentView === 'solution' && (
+        <SolutionView onNavigate={setCurrentView} />
+      )}
+
       {/* Manager Add Task Modal */}
       <AddTaskModal
         isOpen={isAddTaskModalOpen}
@@ -415,5 +440,6 @@ export default function App() {
         highlightSegmentIds={activeEvidenceSegments}
       />
     </DashboardLayout>
-  );
+  </ArchitectureProvider>
+);
 }

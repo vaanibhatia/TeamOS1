@@ -21,6 +21,9 @@ import {
   Bookmark,
   Terminal,
   MessageSquare,
+  CalendarRange,
+  FolderGit2,
+  FileCode2,
 } from 'lucide-react';
 import { mockUsers } from '../api/mockData';
 import SyncoraLogo from './SyncoraLogo';
@@ -98,6 +101,7 @@ export default function Sidebar({
       { id: 'manager-approvals', label: 'Needs Approval', icon: AlertCircle, count: counts.needsApproval, highlight: counts.needsApproval > 0 },
       { id: 'manager-add-task', label: 'Add Task', icon: PlusCircle, isAction: true },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
+      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'employee') {
@@ -108,23 +112,28 @@ export default function Sidebar({
       { id: 'employee-completed', label: 'Completed Tasks', icon: CheckCircle2 },
       { id: 'employee-blocked', label: 'Blocked Tasks', icon: AlertTriangle, count: counts.employeeBlocked, danger: counts.employeeBlocked > 0 },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
+      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'student') {
-    // Student Workspace: strictly Home, My Tasks, Completed Tasks, Discussions
+    // Student Workspace: strictly Home, My Tasks, Completed Tasks, Timeline, Discussions
     navItems = [
       { id: 'home', label: 'Home', icon: Home },
       { id: 'student-tasks', label: 'My Tasks', icon: Bookmark, count: counts.studentPending },
       { id: 'student-completed', label: 'Completed Tasks', icon: CheckCircle2, count: counts.studentCompleted },
+      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'developer') {
-    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar, Discussions
+    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar, Timeline, Discussions, Architecture & Solution
     navItems = [
       { id: 'home', label: 'Developer Board', icon: Terminal },
+      { id: 'project-architecture', label: 'Project Architecture', icon: FolderGit2 },
+      { id: 'solution', label: 'Solution', icon: FileCode2 },
       { id: 'dev-graph', label: 'Dependency Graph', icon: GitCommit },
       { id: 'dev-kanban', label: 'Code Task Board', icon: CheckSquare },
       { id: 'dev-blockers', label: 'Blocker Radar', icon: AlertTriangle, count: 2, danger: true },
+      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
       { id: 'meetings', label: 'Engineering Syncs', icon: Calendar },
     ];
