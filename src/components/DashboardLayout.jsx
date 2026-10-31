@@ -4,9 +4,11 @@ import TopBar from './TopBar';
 
 export default function DashboardLayout({
   currentRole = 'manager',
+  currentUser = null,
   currentView = 'home',
   onNavigate = () => {},
   onSwitchRole = () => {},
+  onLogout = () => {},
   selectedMeetingId = 'meet_001',
   onSelectMeeting = () => {},
   meetings = [],
@@ -26,9 +28,11 @@ export default function DashboardLayout({
         {/* Left Sidebar */}
         <Sidebar
           currentRole={currentRole}
+          currentUser={currentUser}
           currentView={currentView}
           onNavigate={onNavigate}
           onSwitchRole={onSwitchRole}
+          onLogout={onLogout}
           meetingTitle={activeMeeting?.title}
           hasActiveMeeting={Boolean(activeMeeting)}
           isOpen={isMobileSidebarOpen}
@@ -42,8 +46,10 @@ export default function DashboardLayout({
           {/* Top Bar */}
           <TopBar
             currentRole={currentRole}
+            currentUser={currentUser}
             currentView={currentView}
             onSwitchRole={onSwitchRole}
+            onLogout={onLogout}
             onSelectMeeting={onSelectMeeting}
             selectedMeetingId={selectedMeetingId}
             meetings={meetings}

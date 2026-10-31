@@ -19,7 +19,7 @@ import {
 
 export default function StudentView({
   meetingData,
-  onOpenEvidence = () => {},
+  onOpenEvidence = () => { },
 }) {
   if (!meetingData) {
     return (
@@ -354,11 +354,10 @@ export default function StudentView({
             checklist.map((item) => (
               <div
                 key={item.id}
-                className={`flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
-                  item.completed
-                    ? 'bg-surface-50/50 dark:bg-surface-800/20 border-surface-200/60 dark:border-surface-800/60'
-                    : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 hover:border-indigo-300 dark:hover:border-indigo-800'
-                }`}
+                className={`flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${item.completed
+                  ? 'bg-surface-50/50 dark:bg-surface-800/20 border-surface-200/60 dark:border-surface-800/60'
+                  : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 hover:border-indigo-300 dark:hover:border-indigo-800'
+                  }`}
               >
                 <div
                   className="flex items-center gap-3 flex-1 cursor-pointer select-none"
@@ -367,21 +366,19 @@ export default function StudentView({
                   <button
                     type="button"
                     aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
-                    className={`w-5 h-5 rounded-lg flex items-center justify-center transition-colors border ${
-                      item.completed
-                        ? 'bg-indigo-600 border-indigo-600 text-white'
-                        : 'border-surface-300 dark:border-surface-600 hover:border-indigo-500'
-                    }`}
+                    className={`w-5 h-5 rounded-lg flex items-center justify-center transition-colors border ${item.completed
+                      ? 'bg-indigo-600 border-indigo-600 text-white'
+                      : 'border-surface-300 dark:border-surface-600 hover:border-indigo-500'
+                      }`}
                   >
                     {item.completed && <CheckSquare className="w-3.5 h-3.5" />}
                   </button>
 
                   <span
-                    className={`text-xs sm:text-sm font-medium transition-colors ${
-                      item.completed
-                        ? 'line-through text-surface-400 dark:text-surface-500'
-                        : 'text-surface-800 dark:text-surface-200'
-                    }`}
+                    className={`text-xs sm:text-sm font-medium transition-colors ${item.completed
+                      ? 'line-through text-surface-400 dark:text-surface-500'
+                      : 'text-surface-800 dark:text-surface-200'
+                      }`}
                   >
                     {item.text}
                   </span>

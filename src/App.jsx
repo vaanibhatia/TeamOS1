@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RoleSelection from './components/RoleSelection';
+import LoginPage from './pages/LoginPage';
 import DashboardLayout from './components/DashboardLayout';
 import HomePage from './pages/HomePage';
 import AllMeetingsPage from './pages/AllMeetingsPage';
@@ -7,6 +8,7 @@ import MeetingDetailsPage from './pages/MeetingDetailsPage';
 import ManagerWorkspaceView from './pages/ManagerWorkspaceView';
 import EmployeeWorkspaceView from './pages/EmployeeWorkspaceView';
 import StudentWorkspaceView from './pages/StudentWorkspaceView';
+import DeveloperDashboard from './pages/DeveloperDashboard';
 import TaskDependencyGraph from './components/TaskDependencyGraph';
 import AddTaskModal from './components/AddTaskModal';
 import EvidenceDrawer from './components/EvidenceDrawer';
@@ -20,9 +22,45 @@ import {
 } from './api/mockData';
 
 export default function App() {
-  // 1. Role Selection State: null displays the initial Role Selection screen
-  // User can choose 'manager' | 'employee' | 'student'
-  const [currentRole, setCurrentRole] = useState(null);
+  // 1. Role Selection & Authentication State
+  // Check localStorage for persisted user session
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('syncora_user');
+      if (savedUser) {
+        return JSON.parse(savedUser);
+      }
+      const savedAuth = localStorage.getItem('syncora_auth');
+      if (savedAuth) {
+        const parsed = JSON.parse(savedAuth);
+        return parsed?.user || null;
+      }
+    } catch (e) {
+      console.error('Failed to restore user from localStorage', e);
+    }
+    return null;
+  });
+
+  const [currentRole, setCurrentRole] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('syncora_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        return parsed?.role || null;
+      }
+      const savedAuth = localStorage.getItem('syncora_auth');
+      if (savedAuth) {
+        const parsed = JSON.parse(savedAuth);
+        return parsed?.role || null;
+      }
+    } catch (e) {
+      console.error('Failed to restore role from localStorage', e);
+    }
+    return null;
+  });
+
+  // Selected role for the dedicated full-page Login screen transition
+  const [authRole, setAuthRole] = useState(null);
 
   // 2. Active Employee ID (when in Employee workspace)
   // Default to first employee (Rahul Sharma: 'usr_001')
@@ -68,15 +106,28 @@ export default function App() {
     setIsEvidenceDrawerOpen(false);
   };
 
-  // Handler when selecting a role from initial screen
-  const handleSelectRole = (role) => {
+  // Handler when selecting a role / logging in from initial screen
+  const handleSelectRole = (role, session = null) => {
     setCurrentRole(role);
+    if (session?.user) {
+      setCurrentUser(session.user);
+    }
     setCurrentView('home');
   };
 
-  // Handler to return to Role Selection screen
-  const handleSwitchRole = () => {
+  // Handler to logout (clears localStorage and returns to workspace selection)
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('syncora_user');
+      localStorage.removeItem('syncora_auth');
+      localStorage.removeItem('syncora_token');
+    } catch (e) {
+      console.error('Failed to clear session from localStorage', e);
+    }
     setCurrentRole(null);
+    setCurrentUser(null);
+    setAuthRole(null);
+    setCurrentView('home');
   };
 
   // Handler to select and view a meeting
@@ -127,17 +178,33 @@ export default function App() {
     studentCompleted: studentTasks.filter((t) => t.status === 'completed').length,
   };
 
-  // Render Role Selection screen if no role is active
+  // Flow Transition: Role Selection -> Dedicated Full-Page Login -> Dashboard
   if (!currentRole) {
-    return <RoleSelection onSelectRole={handleSelectRole} />;
+    if (authRole) {
+      return (
+        <LoginPage
+          roleId={authRole}
+          onBack={() => setAuthRole(null)}
+          onLoginSuccess={({ role, email }) => {
+            setCurrentRole(role);
+            setCurrentUser({ role, email });
+            setAuthRole(null);
+            setCurrentView('home');
+          }}
+        />
+      );
+    }
+    return <RoleSelection onSelectRole={(roleId) => setAuthRole(roleId)} />;
   }
 
   return (
     <DashboardLayout
       currentRole={currentRole}
+      currentUser={currentUser}
       currentView={currentView}
       onNavigate={setCurrentView}
-      onSwitchRole={handleSwitchRole}
+      onSwitchRole={handleLogout}
+      onLogout={handleLogout}
       selectedMeetingId={selectedMeetingId}
       onSelectMeeting={handleSelectMeeting}
       meetings={currentRole === 'student' ? studentMeetings : meetings}
@@ -152,9 +219,10 @@ export default function App() {
       counts={sidebarCounts}
     >
       {/* 1. Common Homepage View */}
-      {currentView === 'home' && (
+      {currentView === 'home' && currentRole !== 'developer' && (
         <HomePage
           currentRole={currentRole}
+          currentUser={currentUser}
           meetings={meetings}
           tasks={tasks}
           activeEmployeeId={activeEmployeeId}
@@ -311,6 +379,15 @@ export default function App() {
         />
       )}
 
+      {/* 8. DEDICATED DEVELOPER WORKSPACE (Architecture Graph, Code Task Board, Blocker Radar) */}
+      {currentRole === 'developer' && (currentView === 'home' || currentView === 'developer-dashboard' || currentView.startsWith('dev-')) && (
+        <DeveloperDashboard
+          subView={currentView}
+          onOpenEvidence={handleOpenEvidence}
+          onSelectMeeting={handleSelectMeeting}
+        />
+      )}
+
       {/* Manager Add Task Modal */}
       <AddTaskModal
         isOpen={isAddTaskModalOpen}
@@ -321,7 +398,7 @@ export default function App() {
         meetings={meetings}
       />
 
-      {/* Slide-over Verified Evidence Drawer */}
+
       <EvidenceDrawer
         isOpen={isEvidenceDrawerOpen}
         onClose={handleCloseEvidence}

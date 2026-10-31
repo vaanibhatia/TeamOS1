@@ -40,6 +40,15 @@ export const mockUsers = {
     avatar: "AC",
     color: "from-violet-600 to-purple-500",
   },
+  developer: {
+    id: "usr_dev",
+    name: "Alex Rivera",
+    role: "developer",
+    title: "Tech Lead & System Architect",
+    email: "developer@syncora.io",
+    avatar: "AR",
+    color: "from-cyan-600 to-blue-500",
+  },
 };
 
 export const mockEmployees = [

@@ -21,8 +21,10 @@ import { mockUsers, mockNotifications } from '../api/mockData';
 
 export default function TopBar({
   currentRole = 'manager',
+  currentUser: passedUser = null,
   currentView = 'home',
   onSwitchRole = () => {},
+  onLogout = () => {},
   onSelectMeeting = () => {},
   selectedMeetingId = 'meet_001',
   meetings = [],
@@ -30,7 +32,7 @@ export default function TopBar({
   searchQuery = '',
   onSearchChange = () => {},
 }) {
-  const currentUser = mockUsers[currentRole] || mockUsers.manager;
+  const currentUser = passedUser || mockUsers[currentRole] || mockUsers.manager;
   const [notifications, setNotifications] = useState(mockNotifications);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -66,13 +68,17 @@ export default function TopBar({
   const activeMeeting = meetings.find((m) => m._id === selectedMeetingId) || meetings[0];
 
   const viewTitles = {
-    home: 'Workspace Overview',
+    home: currentRole === 'developer' ? 'Developer Board • System Architecture & Sprint' : 'Workspace Overview',
     meetings: 'All Meetings',
     'meeting-details': activeMeeting ? activeMeeting.title : 'Meeting Details',
     'manager-approvals': 'Needs Approval (AI Suggestions)',
     'manager-pending': 'Pending Deliverables',
     'manager-completed': 'Completed Deliverables',
     'dependency-graph': 'Task Dependency Graph',
+    'developer-dashboard': 'Developer Board • Architecture & Engineering Sprint',
+    'dev-graph': 'Project & Architecture Dependency Graph',
+    'dev-kanban': 'Engineering Code Task Board',
+    'dev-blockers': 'Technical Blocker & Ambiguity Radar',
     'employee-pending': 'My Pending Tasks',
     'employee-in-progress': 'In Progress Tasks',
     'employee-completed': 'Completed Tasks',
@@ -271,16 +277,42 @@ export default function TopBar({
             )}
           </div>
 
-          {/* Profile Menu */}
-          <div className="relative" ref={profileRef}>
+          {/* User Name & Email Display on Navbar */}
+          <div className="hidden md:flex items-center gap-2.5 pl-2">
+            <div className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${currentUser.color || 'from-indigo-600 to-violet-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0`}>
+              {currentUser.avatar || 'U'}
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-bold text-surface-900 dark:text-white leading-tight truncate max-w-[130px] lg:max-w-[160px] capitalize">
+                {currentUser.name || currentUser.email?.split('@')[0] || `${currentRole} User`}
+              </span>
+              <span className="text-[10px] text-surface-500 dark:text-surface-400 leading-tight truncate max-w-[130px] lg:max-w-[160px]">
+                {currentUser.email || `${currentRole}@syncora.io`}
+              </span>
+            </div>
+          </div>
+
+          {/* Direct Navbar Logout Button */}
+          <button
+            type="button"
+            onClick={onLogout || onSwitchRole}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 transition-colors cursor-pointer shadow-xs"
+            title="Log out and return to workspace selection"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+
+          {/* Profile Menu (Mobile dropdown) */}
+          <div className="relative md:hidden" ref={profileRef}>
             <button
               type="button"
               onClick={() => setIsProfileOpen((prev) => !prev)}
-              className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors focus:outline-none"
+              className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors focus:outline-none"
               aria-label="User profile menu"
             >
-              <div className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${currentUser.color} text-white font-bold text-xs flex items-center justify-center shadow-xs`}>
-                {currentUser.avatar}
+              <div className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${currentUser.color || 'from-indigo-600 to-violet-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs`}>
+                {currentUser.avatar || 'U'}
               </div>
               <ChevronDown
                 className={`w-3.5 h-3.5 text-surface-400 transition-transform ${
@@ -321,13 +353,13 @@ export default function TopBar({
                   <button
                     type="button"
                     onClick={() => {
-                      onSwitchRole();
+                      (onLogout || onSwitchRole)();
                       setIsProfileOpen(false);
                     }}
-                    className="w-full px-4 py-2 flex items-center gap-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-left"
+                    className="w-full px-4 py-2 flex items-center gap-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-left font-semibold"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Exit to Role Selection</span>
+                    <span>Log Out</span>
                   </button>
                 </div>
               </div>

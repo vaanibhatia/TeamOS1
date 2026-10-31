@@ -16,6 +16,7 @@ import {
   FileText,
   ListTodo,
   Bookmark,
+  Terminal,
 } from 'lucide-react';
 import MeetingCard from '../components/MeetingCard';
 import { mockUsers } from '../api/mockData';
@@ -32,6 +33,7 @@ function getGreeting() {
 
 export default function HomePage({
   currentRole = 'manager',
+  currentUser: passedUser = null,
   meetings = [],
   tasks = [],
   activeEmployeeId = 'usr_001',
@@ -42,7 +44,13 @@ export default function HomePage({
   onNavigateWorkflow = () => {},
   onNavigate = () => {},
 }) {
-  const currentUser = mockUsers[currentRole] || mockUsers.manager;
+  const defaultUser = mockUsers[currentRole] || mockUsers.manager;
+  const currentUser = {
+    ...defaultUser,
+    ...passedUser,
+    name: passedUser?.name || defaultUser?.name || 'Engineer',
+    email: passedUser?.email || defaultUser?.email,
+  };
   const greeting = getGreeting();
 
   // Tasks dataset: use passed shared tasks or fallback to meetings

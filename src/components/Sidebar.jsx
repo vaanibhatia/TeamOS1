@@ -19,15 +19,18 @@ import {
   PlusCircle,
   GitCommit,
   Bookmark,
+  Terminal,
 } from 'lucide-react';
 import { mockUsers } from '../api/mockData';
 import SyncoraLogo from './SyncoraLogo';
 
 export default function Sidebar({
   currentRole = 'manager',
+  currentUser: passedUser = null,
   currentView = 'home',
   onNavigate = () => {},
   onSwitchRole = () => {},
+  onLogout = () => {},
   meetingTitle = '',
   hasActiveMeeting = false,
   isOpen = true,
@@ -41,12 +44,13 @@ export default function Sidebar({
     employeeInProgress: 0,
   },
 }) {
-  const currentUser = mockUsers[currentRole] || mockUsers.manager;
+  const currentUser = passedUser || mockUsers[currentRole] || mockUsers.manager;
 
   const roleLabels = {
     manager: { label: 'Manager Workspace', badge: 'Leadership', icon: Briefcase, color: 'text-indigo-500' },
     employee: { label: 'Employee Workspace', badge: 'Execution', icon: Users, color: 'text-emerald-500' },
     student: { label: 'Student Workspace', badge: 'Observer', icon: GraduationCap, color: 'text-violet-500' },
+    developer: { label: 'Developer Workspace', badge: 'Tech Lead', icon: Terminal, color: 'text-cyan-500' },
   };
 
   const currentRoleInfo = roleLabels[currentRole] || roleLabels.manager;
@@ -73,12 +77,21 @@ export default function Sidebar({
       { id: 'employee-blocked', label: 'Blocked Tasks', icon: AlertTriangle, count: counts.employeeBlocked, danger: counts.employeeBlocked > 0 },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
     ];
-  } else {
+  } else if (currentRole === 'student') {
     // Student Workspace: strictly Home, My Tasks, Completed Tasks
     navItems = [
       { id: 'home', label: 'Home', icon: Home },
       { id: 'student-tasks', label: 'My Tasks', icon: Bookmark, count: counts.studentPending },
       { id: 'student-completed', label: 'Completed Tasks', icon: CheckCircle2, count: counts.studentCompleted },
+    ];
+  } else if (currentRole === 'developer') {
+    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar
+    navItems = [
+      { id: 'home', label: 'Developer Board', icon: Terminal },
+      { id: 'dev-graph', label: 'Dependency Graph', icon: GitCommit },
+      { id: 'dev-kanban', label: 'Code Task Board', icon: CheckSquare },
+      { id: 'dev-blockers', label: 'Blocker Radar', icon: AlertTriangle, count: 2, danger: true },
+      { id: 'meetings', label: 'Engineering Syncs', icon: Calendar },
     ];
   }
 
@@ -265,11 +278,22 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onSwitchRole}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 hover:bg-surface-200 dark:bg-surface-800 dark:hover:bg-surface-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 hover:bg-surface-200 dark:bg-surface-800 dark:hover:bg-surface-700 transition-colors cursor-pointer"
             title="Switch Workspace / Role"
           >
             <ArrowLeftRight className="w-3.5 h-3.5 text-brand-500" />
             <span>Switch Role / Workspace</span>
+          </button>
+
+          {/* Direct Logout Action */}
+          <button
+            type="button"
+            onClick={onLogout || onSwitchRole}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/60 border border-rose-200/60 dark:border-rose-900/40 transition-colors cursor-pointer"
+            title="Log out and return to workspace selection"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
           </button>
         </div>
       </aside>
