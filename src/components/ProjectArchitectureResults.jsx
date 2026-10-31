@@ -53,6 +53,7 @@ import {
   Undo2,
   Redo2,
   SlidersHorizontal,
+  Bot,
 } from 'lucide-react';
 import {
   ReactFlow,
@@ -66,6 +67,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useArchitecture } from '../context/ArchitectureContext';
+import DeveloperBot from './DeveloperBot';
 
 // =============================================================================
 // REACT FLOW CUSTOM NODE COMPONENTS (Group Containers & Pill Nodes)
@@ -834,6 +836,7 @@ export default function ProjectArchitectureResults({
 
   // Active view tab inside Results: 'mindmap' | 'features' | 'functions' | 'diagram' | 'tree' | 'dependencies' | 'dataflow'
   const [activeTab, setActiveTab] = useState('mindmap');
+  const [isBotOpen, setIsBotOpen] = useState(false);
 
   // Safe Fallbacks for Structured Architecture Properties
   const techStack = analysisData?.techStack || [];
@@ -2753,6 +2756,29 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         </div>
       )}
 
+          {/* Floating AI Codebase Copilot Toggle Button */}
+      <button
+        type="button"
+        onClick={() => setIsBotOpen(!isBotOpen)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold text-xs border border-white/20 group cursor-pointer"
+        title="Toggle Syncora AI Codebase Copilot"
+      >
+        <div className="relative flex items-center justify-center">
+          <Bot className="w-4 h-4 text-white group-hover:rotate-6 transition-transform" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-indigo-700 animate-pulse" />
+        </div>
+        <span>Codebase Copilot</span>
+        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono tracking-wider font-bold">
+          AI
+        </span>
+      </button>
+
+      {/* Developer Codebase AI Assistant Bot Drawer */}
+      <DeveloperBot
+        isOpen={isBotOpen}
+        onClose={() => setIsBotOpen(false)}
+        analysisData={analysisData}
+      />
     </div>
   );
 }

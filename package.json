@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^2.32.0",
     "@xyflow/react": "^12.12.0",
     "framer-motion": "^14.9.0",
     "jszip": "^3.10.2",

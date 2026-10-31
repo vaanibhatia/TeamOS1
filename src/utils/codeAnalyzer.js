@@ -1129,6 +1129,29 @@ export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onPro
     },
   ];
 
+  // Extract key source code snippets for AI Codebase Bot & Copilot
+  const extractedKeySnippets = [];
+  const candidateKeyFiles = [
+    'package.json', 'schema.prisma', 'server.js', 'app.js', 'index.js',
+    'main.jsx', 'App.jsx', 'main.py', 'main.go', '001_initial_schema.sql'
+  ];
+
+  for (const [fPath, fContent] of textFiles.entries()) {
+    const fName = fPath.split('/').pop() || '';
+    const isKeyFile = candidateKeyFiles.some((k) => fName.toLowerCase() === k.toLowerCase()) ||
+      fPath.includes('routes/') ||
+      fPath.includes('controllers/') ||
+      fPath.includes('prisma/');
+
+    if (isKeyFile && extractedKeySnippets.length < 12) {
+      extractedKeySnippets.push({
+        path: fPath,
+        fileName: fName,
+        snippet: fContent.split('\n').slice(0, 75).join('\n'),
+      });
+    }
+  }
+
   onProgress(6, 'Finalizing architecture blueprint payload...', 100);
 
   // Return full structured payload including Mind Map, Function Directory, and Feature Breakdown
@@ -1182,6 +1205,7 @@ export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onPro
     filesWithMetadata,
     rawFiles: files,
     codebaseGraph,
+    keySnippets: extractedKeySnippets,
     securityExclusions: {
       status: 'passed',
       secretsFound: 0,
