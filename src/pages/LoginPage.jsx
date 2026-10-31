@@ -51,6 +51,24 @@ export const ROLE_CONFIG = {
     demoPassword: 'developer123',
     buttonClass: 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-600/25',
   },
+  event_manager: {
+    id: 'event_manager',
+    title: 'Event Manager / Lead Organizer',
+    badge: 'Planning & Leadership',
+    badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    demoEmail: 'elena.rostova@syncora.events',
+    demoPassword: 'eventlead123',
+    buttonClass: 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/25',
+  },
+  event_member: {
+    id: 'event_member',
+    title: 'Event Team Member / Volunteer',
+    badge: 'On-Ground Execution',
+    badgeColor: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    demoEmail: 'marcus.vance@syncora.events',
+    demoPassword: 'volunteer123',
+    buttonClass: 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/25',
+  },
 };
 
 export default function LoginPage({
@@ -308,10 +326,7 @@ export default function LoginPage({
       <footer className="max-w-6xl w-full mx-auto py-4 border-t border-surface-200 dark:border-surface-800 flex flex-col sm:flex-row items-center justify-between text-xs text-surface-400 gap-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-surface-700 dark:text-surface-300">Syncora Platform</span>
-          <span>•</span>
-          <span>Technical Contract v1.0 Compliant</span>
         </div>
-
       </footer>
 
     </div>

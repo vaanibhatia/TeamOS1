@@ -1772,11 +1772,26 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                   <div className="pt-3 border-t border-surface-100 dark:border-surface-800 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onNavigate('solution')}
+                      onClick={() => {
+                        if (selectedMindMapModule?.path) {
+                          navigator.clipboard.writeText(selectedMindMapModule.path);
+                          setCopiedPath(selectedMindMapModule.path);
+                          setTimeout(() => setCopiedPath(null), 2000);
+                        }
+                      }}
                       className="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                     >
-                      <span>Jump to Solution</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      {copiedPath === selectedMindMapModule?.path ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-300" />
+                          <span>Copied Path!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Module Path</span>
+                        </>
+                      )}
                     </button>
                     <button
                       type="button"

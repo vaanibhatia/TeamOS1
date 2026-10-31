@@ -68,7 +68,7 @@ export default function TopBar({
   const activeMeeting = meetings.find((m) => m._id === selectedMeetingId) || meetings[0];
 
   const viewTitles = {
-    home: currentRole === 'developer' ? 'Developer Board • System Architecture & Sprint' : 'Workspace Overview',
+    home: currentRole === 'developer' ? 'Project Architecture • Analysis & Inspection' : 'Workspace Overview',
     meetings: 'All Meetings',
     'meeting-details': activeMeeting ? activeMeeting.title : 'Meeting Details',
     'manager-approvals': 'Needs Approval (AI Suggestions)',
