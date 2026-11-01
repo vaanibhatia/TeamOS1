@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import SyncoraLogo from '../components/SyncoraLogo';
 
 /**
  * 3D Animated Light Landing Page for Syncora
  * Featuring continuous 3D rotation, floating bounce, ambient aura,
  * and typewriter tagline with glowing blue blinking cursor.
  */
-export default function LandingPage({ onContinue = () => {} }) {
+export default function LandingPage({ onContinue = () => { } }) {
   // Phrases to loop in typing animation
   const phrases = [
     'One Space. Every Voice. Aligned Action.',
@@ -94,7 +95,18 @@ export default function LandingPage({ onContinue = () => {} }) {
             opacity: 0;
           }
         }
+@keyframes syncoraSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
+.animate-syncora-spin {
+  animation: syncoraSpin 8s linear infinite;
+}
         .animate-syncora-float {
           animation: syncoraFloatBounce 4.5s ease-in-out infinite;
         }
@@ -129,7 +141,7 @@ export default function LandingPage({ onContinue = () => {} }) {
 
       {/* Center Content Stack */}
       <main className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto my-auto py-6 sm:py-10">
-        
+
         {/* 1. 3D Animated Petal Logo with Floating Bounce and Ambient Aura */}
         <div className="relative mb-6 sm:mb-8 group">
           {/* Ambient Glowing Aura */}
@@ -141,15 +153,9 @@ export default function LandingPage({ onContinue = () => {} }) {
           {/* Floating & 3D Rotating Logo Container */}
           <div className="relative animate-syncora-float">
             <div className="animate-syncora-3d flex items-center justify-center">
-              <img
-                src="/assets/aistudio/image_84b1b1e4.png"
-                alt="Syncora 3D Petal Logo"
-                className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 object-contain drop-shadow-[0_20px_40px_rgba(79,85,248,0.22)] select-none pointer-events-none"
-                onError={(e) => {
-                  // Safe fallback to logo.svg if required
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = '/logo.svg';
-                }}
+              <SyncoraLogo
+                withBackground={false}
+                className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44"
               />
             </div>
           </div>

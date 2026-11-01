@@ -16,7 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import SyncoraLogo from './SyncoraLogo';
 
-export default function RoleSelection({ onSelectRole = () => {}, onBack = null }) {
+export default function RoleSelection({ onSelectRole = () => { }, onBack = null }) {
   // Modal state: null | 'corporate' | 'event'
   const [activeModal, setActiveModal] = useState(null);
 
@@ -89,7 +89,7 @@ export default function RoleSelection({ onSelectRole = () => {}, onBack = null }
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-950 text-surface-900 dark:text-surface-100 flex flex-col justify-between p-4 sm:p-6 lg:p-12 transition-colors relative">
-      
+
       {/* Top Brand Bar */}
       <header className="max-w-7xl w-full mx-auto flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export default function RoleSelection({ onSelectRole = () => {}, onBack = null }
               </span>
             </div>
             <p className="text-xs text-surface-500 dark:text-surface-400">
-              AI-Powered Meeting Management & Intelligence Platform
+              All Your Team's Moving Pieces, Finally Together.
             </p>
           </div>
         </div>
@@ -212,11 +212,10 @@ export default function RoleSelection({ onSelectRole = () => {}, onBack = null }
             >
               {/* Subtle Ambient Decorative Header Glow */}
               <div
-                className={`absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 rounded-full blur-2xl pointer-events-none ${
-                  activeModal === 'corporate'
+                className={`absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 rounded-full blur-2xl pointer-events-none ${activeModal === 'corporate'
                     ? 'bg-indigo-500/10 dark:bg-indigo-500/15'
                     : 'bg-amber-500/10 dark:bg-amber-500/15'
-                }`}
+                  }`}
               />
 
               {/* Modal Top Bar */}
