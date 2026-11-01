@@ -130,7 +130,6 @@ export function classifyFileLayer(filePath, ext) {
     p.includes('/layouts/') || p.startsWith('layouts/') ||
     p.includes('/templates/') || p.startsWith('templates/') ||
     p.includes('/ui/') || p.startsWith('ui/') ||
-    ext === 'jsx' || ext === 'tsx' || ext === 'vue' || ext === 'svelte' || ext === 'html' ||
     p.endsWith('app.jsx') || p.endsWith('app.tsx') || p.endsWith('main.jsx') || p.endsWith('index.jsx')
   ) {
     return 'ui';
@@ -153,7 +152,7 @@ export function classifyFileLayer(filePath, ext) {
   }
 
   // Fallbacks based on file type
-  if (ext === 'jsx' || ext === 'tsx') return 'ui';
+
   if (ext === 'sql' || ext === 'prisma') return 'data';
   return 'services';
 }
@@ -237,7 +236,7 @@ export function extractFileSymbols(filePath, content, ext, layer) {
     if (!name || seenNames.has(`${name}:${type}`)) return;
     seenNames.add(`${name}:${type}`);
     symbols.push({
-      id: `sym-${filePath.replace(/[^a-zA-Z0-9_-]/g, '_')}-${name}`,
+      id: `symbol-${filePath.replace(/[^a-zA-Z0-9_-]/g, '_')}-${name}`,
       name,
       type,
       file: filePath,
@@ -831,118 +830,295 @@ export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onPro
     ],
   };
 
-  // 6. Synthesize Real Feature Breakdown strictly from code evidence
+
+  // 6. Discover application features from actual source-code evidence
   const featureBreakdown = [];
 
-  // A. Authentication & Identity Feature
-  const authFiles = filesWithMetadata.filter((f) =>
-    /auth|login|signup|session|jwt|bcrypt/i.test(f.path)
-  );
-  if (
-    authFiles.length > 0 ||
-    techStack.some((t) => /jwt|bcrypt|auth/i.test(t)) ||
-    apiRoutes.some((r) => /auth|login|signup/i.test(r.path))
-  ) {
-    const authRoutes = apiRoutes.filter((r) => /auth|login|signup|session/i.test(r.path));
-    const authSymbols = functionDirectory.filter(
-      (s) => /auth|login|token|session|user/i.test(s.name) && s.layer !== 'ui'
-    );
-    featureBreakdown.push({
-      id: 'feat-auth',
-      title: 'Authentication & Session Security',
+  const featureDefinitions = [
+    {
+      id: 'discussions',
+      title: 'Discussions & Collaboration',
+      keywords: /discussion|comment|thread|conversation/i,
+      category: 'Collaboration',
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      keywords: /notification|notify|alert|reminder/i,
+      category: 'Communication',
+    },
+    {
+      id: 'decisions',
+      title: 'Decisions & Approvals',
+      keywords: /decision|approval|approve|reject/i,
+      category: 'Workflow Management',
+    },
+    {
+      id: 'timeline',
+      title: 'Timeline & Activity Tracking',
+      keywords: /timeline|activity|milestone|eventlog/i,
+      category: 'Project Tracking',
+    },
+    {
+      id: 'ask',
+      title: 'Ask & AI Assistant',
+      keywords: /\bask\b|assistant|copilot|aiquery|chatbot/i,
+      category: 'AI & Assistance',
+    },
+    {
+      id: 'team',
+      title: 'Team & Member Management',
+      keywords: /team|member|employee|developer|stakeholder/i,
+      category: 'Team Management',
+    },
+    {
+      id: 'meetings',
+      title: 'Meetings & Recording',
+      keywords: /meeting|recording|transcript|speaker|audio/i,
+      category: 'Meeting Management',
+    },
+    {
+      id: 'tasks',
+      title: 'Tasks & Work Management',
+      keywords: /task|todo|kanban|assignment|workitem/i,
+      category: 'Work Management',
+    },
+    {
+      id: 'authentication',
+      title: 'Authentication & Identity',
+      keywords: /auth|login|signup|session|jwt|bcrypt/i,
       category: 'Security & Identity',
-      badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-300 dark:border-purple-800',
-      description: 'Role-based credentials verification, cryptographic token signing, and session lifecycle controls.',
-      supportingFiles: authFiles.map((f) => f.path),
-      associatedRoutes: authRoutes.map((r) => `${r.method} ${r.path}`),
-      associatedFunctions: authSymbols.slice(0, 5).map((s) => s.name),
-    });
-  }
-
-  // B. Payment / Billing Feature
-  const paymentFiles = filesWithMetadata.filter((f) =>
-    /stripe|payment|billing|checkout|subscription/i.test(f.path)
-  );
-  if (paymentFiles.length > 0 || externalServices.has('Stripe Payments')) {
-    const payRoutes = apiRoutes.filter((r) => /payment|billing|stripe|checkout/i.test(r.path));
-    featureBreakdown.push({
-      id: 'feat-payments',
-      title: 'Payment Processing & Subscriptions',
+    },
+    {
+      id: 'payments',
+      title: 'Payment Processing',
+      keywords: /stripe|payment|billing|checkout|subscription/i,
       category: 'Billing & Monetization',
-      badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
-      description: 'Checkout sessions, payment gateway webhooks, and billing management integration.',
-      supportingFiles: paymentFiles.map((f) => f.path),
-      associatedRoutes: payRoutes.map((r) => `${r.method} ${r.path}`),
-      associatedFunctions: functionDirectory
-        .filter((s) => /stripe|payment|checkout|invoice/i.test(s.name))
-        .slice(0, 5)
-        .map((s) => s.name),
-    });
-  }
-
-  // C. Realtime / WebSocket Feature
-  const wsFiles = filesWithMetadata.filter((f) =>
-    /socket|websocket|stream|pubsub/i.test(f.path)
-  );
-  if (wsFiles.length > 0 || techStack.some((t) => /socket|websocket/i.test(t))) {
-    featureBreakdown.push({
-      id: 'feat-realtime',
-      title: 'Real-Time Communication & WebSockets',
+    },
+    {
+      id: 'realtime',
+      title: 'Real-Time Communication',
+      keywords: /socket|websocket|realtime|broadcast|pubsub/i,
       category: 'Live Data Sync',
-      badgeColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800',
-      description: 'Persistent bi-directional socket connections, event fanout, and live telemetry synchronization.',
-      supportingFiles: wsFiles.map((f) => f.path),
-      associatedRoutes: apiRoutes.filter((r) => /ws|stream|socket/i.test(r.path)).map((r) => `${r.method} ${r.path}`),
-      associatedFunctions: functionDirectory
-        .filter((s) => /socket|stream|broadcast|emit/i.test(s.name))
-        .slice(0, 5)
-        .map((s) => s.name),
+    },
+  ];
+
+  for (const definition of featureDefinitions) {
+    const matchingFiles = filesWithMetadata.filter((file) => {
+      const fileEvidence = [
+        file.path,
+        ...file.symbols.map((symbol) => symbol.name),
+      ].join(' ');
+
+      return definition.keywords.test(fileEvidence);
+    });
+
+    const matchingRoutes = apiRoutes.filter((route) =>
+      definition.keywords.test(route.path)
+    );
+
+    const matchingFunctions = functionDirectory.filter((symbol) =>
+      definition.keywords.test(symbol.name)
+    );
+
+    const supportingFilePaths = new Set([
+      ...matchingFiles.map((file) => file.path),
+      ...matchingRoutes.map((route) => route.file),
+    ]);
+
+    if (
+      supportingFilePaths.size === 0 &&
+      matchingFunctions.length === 0
+    ) {
+      continue;
+    }
+
+    featureBreakdown.push({
+      id: `feat-${definition.id}`,
+      title: definition.title,
+      category: definition.category,
+      description: `Detected from ${supportingFilePaths.size} supporting source files and ${matchingFunctions.length} matching symbols.`,
+      supportingFiles: [...supportingFilePaths],
+      associatedRoutes: matchingRoutes.map(
+        (route) => `${route.method} ${route.path}`
+      ),
+      associatedFunctions: matchingFunctions.map(
+        (symbol) => symbol.name
+      ),
     });
   }
 
-  // D. Database CRUD Features (Extracted directly per detected Model)
-  if (detectedModels.length > 0) {
-    for (const model of detectedModels) {
-      const modelName = model.name;
-      const lower = modelName.toLowerCase();
-      const modelFiles = filesWithMetadata.filter(
-        (f) =>
-          f.path.toLowerCase().includes(lower) ||
-          f.symbols.some((s) => s.name.toLowerCase().includes(lower))
-      );
-      const modelRoutes = apiRoutes.filter((r) => r.path.toLowerCase().includes(lower));
-      const modelFuncs = functionDirectory.filter((s) => s.name.toLowerCase().includes(lower));
+  // Keep database model discovery as a separate evidence-based feature.
+  for (const model of detectedModels) {
+    const modelName = model.name;
+    const lower = modelName.toLowerCase();
 
-      featureBreakdown.push({
-        id: `feat-model-${lower}`,
-        title: `${modelName} Management & Lifecycle`,
-        category: 'Core Data CRUD',
-        badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-300 dark:border-blue-800',
-        description: `Relational schema definition, persistence queries, and API endpoints for ${modelName} entities.`,
-        supportingFiles: Array.from(new Set([model.file, ...modelFiles.map((f) => f.path)])).filter(Boolean),
-        associatedRoutes: modelRoutes.map((r) => `${r.method} ${r.path}`),
-        associatedFunctions: modelFuncs.slice(0, 5).map((s) => s.name),
-      });
-    }
+    const modelFiles = filesWithMetadata.filter((file) =>
+      file.path.toLowerCase().includes(lower) ||
+      file.symbols.some((symbol) =>
+        symbol.name.toLowerCase().includes(lower)
+      )
+    );
+
+    const modelRoutes = apiRoutes.filter((route) =>
+      route.path.toLowerCase().includes(lower)
+    );
+
+    const modelFunctions = functionDirectory.filter((symbol) =>
+      symbol.name.toLowerCase().includes(lower)
+    );
+
+    featureBreakdown.push({
+      id: `feat-model-${lower}`,
+      title: `${modelName} Management`,
+      category: 'Core Data',
+      description: `Detected source files, routes and symbols associated with the ${modelName} model.`,
+      supportingFiles: [
+        ...new Set([
+          model.file,
+          ...modelFiles.map((file) => file.path),
+          ...modelRoutes.map((route) => route.file),
+        ].filter(Boolean)),
+      ],
+      associatedRoutes: modelRoutes.map(
+        (route) => `${route.method} ${route.path}`
+      ),
+      associatedFunctions: modelFunctions.map(
+        (symbol) => symbol.name
+      ),
+    });
   }
 
-  // E. Presentation UI Workspace (if frontend components exist)
+  // Generic UI feature remains as a fallback, not a replacement
+  // for individually discovered application features.
   if (uiFiles.length > 0) {
-    const mainComponents = uiFiles.filter((f) => /view|page|dashboard|layout/i.test(f.path));
+    const uiComponents = functionDirectory.filter(
+      (symbol) => symbol.type === 'Component'
+    );
+
     featureBreakdown.push({
       id: 'feat-ui',
-      title: 'Interactive Frontend Workspaces',
+      title: 'Frontend & User Interface',
       category: 'User Interface',
-      badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800',
-      description: `Renders ${uiFiles.length} client views, navigational shells, and reactive interface controls.`,
-      supportingFiles: (mainComponents.length > 0 ? mainComponents : uiFiles).slice(0, 6).map((f) => f.path),
+      description: `Detected ${uiFiles.length} UI source files and ${uiComponents.length} component symbols.`,
+      supportingFiles: uiFiles.map((file) => file.path),
       associatedRoutes: [],
-      associatedFunctions: functionDirectory.filter((s) => s.type === 'Component').slice(0, 6).map((s) => s.name),
+      associatedFunctions: uiComponents.map(
+        (symbol) => symbol.name
+      ),
     });
   }
 
   onProgress(5, 'Tracing API and data flows...', 90);
+  // =============================================================================
+  // Interactive Feature Graph — separate from Project Topology
+  // =============================================================================
+  const featureGraphNodes = [];
+  const featureGraphEdges = [];
 
+  for (const feature of featureBreakdown) {
+    const featureNodeId = feature.id;
+
+    // Main feature node
+    featureGraphNodes.push({
+      id: featureNodeId,
+      label: feature.title,
+      type: 'feature',
+      category: feature.category,
+      description: feature.description,
+    });
+
+    const supportingFiles = Array.isArray(feature.supportingFiles)
+      ? feature.supportingFiles
+      : [];
+
+    const associatedFunctions = new Set(
+      Array.isArray(feature.associatedFunctions)
+        ? feature.associatedFunctions
+        : []
+    );
+
+    // Find actual symbols inside the feature's supporting files
+    for (const filePath of supportingFiles) {
+      const file = filesWithMetadata.find((item) => item.path === filePath);
+
+      if (!file || !Array.isArray(file.symbols)) continue;
+
+      for (const symbol of file.symbols) {
+
+
+        const symbolNodeId = `${featureNodeId}-${filePath}-${symbol.name}`
+          .replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        featureGraphNodes.push({
+          id: symbolNodeId,
+          label: symbol.name,
+          type: symbol.type === 'Component' ? 'component' : 'function',
+          file: filePath,
+          line: symbol.line,
+          featureId: featureNodeId,
+        });
+
+        featureGraphEdges.push({
+          id: `edge-${featureNodeId}-${symbolNodeId}`,
+          source: featureNodeId,
+          target: symbolNodeId,
+          type: 'contains',
+        });
+      }
+    }
+
+    // Attach detected API routes to the feature
+    const associatedRoutes = Array.isArray(feature.associatedRoutes)
+      ? feature.associatedRoutes
+      : [];
+
+    associatedRoutes.forEach((route, index) => {
+      const routeNodeId = `${featureNodeId}-route-${index}`;
+
+      featureGraphNodes.push({
+        id: routeNodeId,
+        label: route,
+        type: 'api',
+        featureId: featureNodeId,
+      });
+
+      featureGraphEdges.push({
+        id: `edge-${featureNodeId}-${routeNodeId}`,
+        source: featureNodeId,
+        target: routeNodeId,
+        type: 'exposes',
+      });
+    });
+  }
+  // Give every feature and its related nodes a position
+  const featureNodes = featureGraphNodes.filter(
+    (node) => node.type === 'feature'
+  );
+
+  featureNodes.forEach((featureNode, featureIndex) => {
+    const featureY = featureIndex * 350;
+
+    featureNode.position = {
+      x: 0,
+      y: featureY,
+    };
+
+    const childNodes = featureGraphNodes.filter(
+      (node) => node.featureId === featureNode.id
+    );
+
+    childNodes.forEach((childNode, childIndex) => {
+      childNode.position = {
+        x: 350,
+        y: featureY + childIndex * 110,
+      };
+    });
+  });
+  const featureGraph = {
+    nodes: featureGraphNodes,
+    edges: featureGraphEdges,
+  };
   // 7. Dynamic Architecture Nodes & Edges
   const componentCount = uiFiles.length;
   const hasFrontend = componentCount > 0;
@@ -1227,6 +1403,7 @@ export async function analyzeZipArchive(fileOrBuffer, customMetadata = {}, onPro
     mindMap,
     functionDirectory,
     featureBreakdown,
+    featureGraph,
     filesWithMetadata,
     rawFiles: files,
     codebaseGraph,

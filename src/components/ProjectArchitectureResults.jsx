@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+
 import {
   FolderGit2,
   FolderTree,
@@ -68,6 +69,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useArchitecture } from '../context/ArchitectureContext';
 import DeveloperBot from './DeveloperBot';
+import ArchitectureNode from './ArchitectureNode';
 
 // =============================================================================
 // REACT FLOW CUSTOM NODE COMPONENTS (Group Containers & Pill Nodes)
@@ -110,9 +112,8 @@ const CustomFilePillNode = ({ data, selected }) => {
 
   return (
     <div
-      className={`px-3 py-1.5 rounded-full flex items-center justify-between gap-2 shadow-sm font-mono text-xs w-[248px] select-none cursor-pointer transition-all ${pillClass} ${
-        selected ? 'ring-2 ring-indigo-600 ring-offset-2 scale-102 font-bold' : 'hover:scale-101'
-      }`}
+      className={`px-3 py-1.5 rounded-full flex items-center justify-between gap-2 shadow-sm font-mono text-xs w-[248px] select-none cursor-pointer transition-all ${pillClass} ${selected ? 'ring-2 ring-indigo-600 ring-offset-2 scale-102 font-bold' : 'hover:scale-101'
+        }`}
     >
       <Handle
         type="target"
@@ -146,6 +147,7 @@ const CustomFilePillNode = ({ data, selected }) => {
 const nodeTypes = {
   group: CustomGroupNode,
   filePill: CustomFilePillNode,
+  architecture: ArchitectureNode,
 };
 
 const miniMapNodeColor = (node) => {
@@ -397,96 +399,94 @@ function generateReactFlowElements(analysisData) {
   });
 
   // 5. Connect Dynamic Dependency Edges
-  const nodeByName = new Map();
-  const nodeByPath = new Map();
-  for (const f of processedFiles) {
-    nodeByPath.set(f.path.toLowerCase(), f);
-    const base = f.name.toLowerCase().replace(/\.[^.]+$/, '');
-    if (!nodeByName.has(base)) {
-      nodeByName.set(base, f);
+
+
+  // 5. Connect only imports resolved to exact file paths
+  const normalizePath = (filePath) => {
+    const parts = filePath.replace(/\\/g, '/').split('/');
+    const result = [];
+
+    for (const part of parts) {
+      if (!part || part === '.') continue;
+
+      if (part === '..') {
+        result.pop();
+      } else {
+        result.push(part);
+      }
     }
+
+    return result.join('/').toLowerCase();
+  };
+
+  const nodeByPath = new Map();
+
+  for (const file of processedFiles) {
+    nodeByPath.set(normalizePath(file.path), file);
   }
+
+  const extensions = [
+    '.js', '.jsx', '.ts', '.tsx',
+    '.mjs', '.cjs', '.json'
+  ];
 
   const rfEdges = [];
   const seenEdgeIds = new Set();
 
   for (const src of processedFiles) {
-    // A. Real file imports
     for (const imp of src.imports || []) {
-      const cleanImp = imp.toLowerCase().replace(/^\.\.?\//, '').replace(/\.[^.]+$/, '');
-      const impParts = cleanImp.split('/');
-      const impBase = impParts[impParts.length - 1];
+      // Ignore packages for now; resolve relative imports only
+      if (!imp.startsWith('./') && !imp.startsWith('../')) {
+        continue;
+      }
+
+      const sourceDirectory = src.path
+        .replace(/\\/g, '/')
+        .split('/')
+        .slice(0, -1)
+        .join('/');
+
+      const basePath = normalizePath(`${sourceDirectory}/${imp}`);
+
+      const candidates = [basePath];
+
+      for (const ext of extensions) {
+        candidates.push(`${basePath}${ext}`);
+        candidates.push(`${basePath}/index${ext}`);
+      }
 
       let target = null;
-      if (nodeByName.has(impBase)) {
-        target = nodeByName.get(impBase);
-      } else {
-        for (const [p, n] of nodeByPath.entries()) {
-          if (p.includes(cleanImp) || p.endsWith(`${impBase}.${n.ext}`)) {
-            target = n;
-            break;
-          }
+
+      for (const candidate of candidates) {
+        if (nodeByPath.has(candidate)) {
+          target = nodeByPath.get(candidate);
+          break;
         }
       }
 
-      if (target && target.nodeId !== src.nodeId) {
-        const edgeId = `edge-${src.nodeId}-${target.nodeId}`;
-        if (!seenEdgeIds.has(edgeId)) {
-          seenEdgeIds.add(edgeId);
-          rfEdges.push({
-            id: edgeId,
-            source: src.nodeId,
-            target: target.nodeId,
-            type: 'smoothstep',
-            animated: true,
-            style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-          });
-        }
-      }
-    }
+      if (!target || target.nodeId === src.nodeId) continue;
 
-    // B. Connect Entry nodes to Controllers / Routes if not already connected
-    if (src.role === 'entry') {
-      const targets = processedFiles.filter(
-        (f) => (f.role === 'controller' || f.role === 'ui') && f.nodeId !== src.nodeId
-      );
-      for (const tgt of targets.slice(0, 3)) {
-        const edgeId = `edge-${src.nodeId}-${tgt.nodeId}`;
-        if (!seenEdgeIds.has(edgeId)) {
-          seenEdgeIds.add(edgeId);
-          rfEdges.push({
-            id: edgeId,
-            source: src.nodeId,
-            target: tgt.nodeId,
-            type: 'smoothstep',
-            animated: true,
-            style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-          });
-        }
-      }
-    }
+      const edgeId = `edge-${src.nodeId}-${target.nodeId}`;
 
-    // C. Connect Controllers to Models / Services
-    if (src.role === 'controller') {
-      const targets = processedFiles.filter(
-        (f) => (f.role === 'service' || f.role === 'data') && f.nodeId !== src.nodeId
-      );
-      for (const tgt of targets.slice(0, 2)) {
-        const edgeId = `edge-${src.nodeId}-${tgt.nodeId}`;
-        if (!seenEdgeIds.has(edgeId)) {
-          seenEdgeIds.add(edgeId);
-          rfEdges.push({
-            id: edgeId,
-            source: src.nodeId,
-            target: tgt.nodeId,
-            type: 'smoothstep',
-            animated: true,
-            style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-          });
-        }
-      }
+      if (seenEdgeIds.has(edgeId)) continue;
+
+      seenEdgeIds.add(edgeId);
+
+      rfEdges.push({
+        id: edgeId,
+        source: src.nodeId,
+        target: target.nodeId,
+        type: 'smoothstep',
+        animated: true,
+        label: 'imports',
+        style: {
+          stroke: '#94a3b8',
+          strokeWidth: 1.5,
+        },
+      });
     }
   }
+
 
   const groupLookup = new Map();
   for (const g of processedGroups) {
@@ -824,7 +824,7 @@ export const DATA_FLOW_PIPELINES = [
 ];
 
 export default function ProjectArchitectureResults({
-  onNavigate = () => {},
+  onNavigate = () => { },
 }) {
   const {
     analysisData,
@@ -847,7 +847,33 @@ export default function ProjectArchitectureResults({
   const database = analysisData?.database || null;
   const functionDirectory = useMemo(() => analysisData?.functionDirectory || [], [analysisData]);
   const featureBreakdown = useMemo(() => analysisData?.featureBreakdown || [], [analysisData]);
+  const featureGraph = useMemo(() => analysisData?.featureGraph || { nodes: [], edges: [] }, [analysisData]);
+  const reactFlowNodes = useMemo(() => {
+    return featureGraph.nodes.map((node) => ({
+      id: node.id,
+      position: node.position,
+      data: {
+        label: node.label,
+        kind: node.type,
+        category: node.category,
+        description: node.description,
+        file: node.file,
+        line: node.line,
+      },
+      type: 'architecture',
+    }));
+  }, [featureGraph]);
 
+  const reactFlowEdges = useMemo(() => {
+    return featureGraph.edges.map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      label: edge.type,
+      type: 'smoothstep',
+      animated: true,
+    }));
+  }, [featureGraph]);
   // Construct Mind Map payload with fallback if needed
   const mindMap = useMemo(() => {
     if (analysisData?.mindMap) return analysisData.mindMap;
@@ -1074,15 +1100,65 @@ export default function ProjectArchitectureResults({
     return s;
   });
 
-  // Display nodes with hidden flag applied
-  const displayNodes = useMemo(() => {
-    return flowNodes.map((n) => {
-      if (hiddenFileIds.has(n.id)) {
-        return { ...n, hidden: true };
+  // Find files directly connected to the selected file
+  const connectedNodeIds = useMemo(() => {
+    const connected = new Set();
+
+    if (!selectedFileId) return connected;
+
+    connected.add(selectedFileId);
+
+    for (const edge of flowEdges) {
+      if (edge.source === selectedFileId) {
+        connected.add(edge.target);
       }
-      return { ...n, hidden: false };
+
+      if (edge.target === selectedFileId) {
+        connected.add(edge.source);
+      }
+    }
+
+    return connected;
+  }, [selectedFileId, flowEdges]);
+
+  // Highlight selected file and its direct connections
+  const displayNodes = useMemo(() => {
+    return flowNodes.map((node) => {
+      const isFileNode = node.type === 'filePill';
+
+      return {
+        ...node,
+        hidden: hiddenFileIds.has(node.id),
+        style: {
+          ...node.style,
+          opacity:
+            !isFileNode || !selectedFileId || connectedNodeIds.has(node.id)
+              ? 1
+              : 0.2,
+          transition: 'opacity 180ms ease',
+        },
+      };
     });
-  }, [flowNodes, hiddenFileIds]);
+  }, [flowNodes, hiddenFileIds, selectedFileId, connectedNodeIds]);
+
+  // Highlight only edges connected to the selected file
+  const displayEdges = useMemo(() => {
+    return flowEdges.map((edge) => {
+      const isConnected =
+        edge.source === selectedFileId || edge.target === selectedFileId;
+
+      return {
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: isConnected ? '#6366f1' : '#94a3b8',
+          strokeWidth: isConnected ? 3 : 1.2,
+          opacity: selectedFileId && !isConnected ? 0.12 : 1,
+        },
+        animated: isConnected,
+      };
+    });
+  }, [flowEdges, selectedFileId]);
 
   // Center on node in React Flow
   const centerOnNode = (file) => {
@@ -1294,10 +1370,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      
+
       {/* 1. TOP HEADER & TOOLBAR */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs">
-        
+
         {/* Project Meta & Tech Stack Badges */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1376,11 +1452,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('mindmap')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'mindmap'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'mindmap'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <GitFork className="w-4 h-4 text-indigo-500" />
           <span>Interactive Mind Map</span>
@@ -1389,11 +1464,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('features')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'features'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'features'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <Sparkles className="w-4 h-4 text-amber-500" />
           <span>Feature Breakdown</span>
@@ -1407,11 +1481,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('functions')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'functions'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'functions'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <FileCode2 className="w-4 h-4 text-cyan-500" />
           <span>Function Directory</span>
@@ -1425,11 +1498,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('diagram')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'diagram'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'diagram'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <Network className="w-4 h-4 text-blue-500" />
           <span>Topology Diagram</span>
@@ -1438,11 +1510,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('tree')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'tree'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'tree'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <FolderTree className="w-4 h-4 text-emerald-500" />
           <span>Folder Tree</span>
@@ -1451,11 +1522,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('dependencies')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'dependencies'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'dependencies'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <Boxes className="w-4 h-4 text-purple-500" />
           <span>Dependencies & Routes</span>
@@ -1464,11 +1534,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         <button
           type="button"
           onClick={() => setActiveTab('dataflow')}
-          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'dataflow'
-              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
-              : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-          }`}
+          className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${activeTab === 'dataflow'
+            ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-xs font-bold'
+            : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
+            }`}
         >
           <Workflow className="w-4 h-4 text-indigo-500" />
           <span>Inferred Data Flow</span>
@@ -1478,10 +1547,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
       {/* 3. SECTION: INTERACTIVE ARCHITECTURE MIND MAP */}
       {activeTab === 'mindmap' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
-          
+
           {/* Main Visual Mind Map Canvas (Left 2 cols) */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Mind Map Root Banner */}
             <div className="p-6 rounded-3xl bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-900/60 shadow-xl relative overflow-hidden">
               <div
@@ -1521,130 +1590,56 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
               </div>
             </div>
 
-            {/* 5 Architecture Layer Branches */}
+
+            {/* Interactive Feature Mind Map */}
             <div className="space-y-4">
-              {(mindMap?.branches || []).map((branch) => {
-                const IconComp = getBranchIcon(branch.layerKey);
-                const isExpanded = expandedMindMapBranches.has(branch.id);
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    Feature Relationship Map
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Explore how features connect to components, functions, and API routes.
+                  </p>
+                </div>
 
-                return (
-                  <div
-                    key={branch.id}
-                    className="rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs overflow-hidden transition-all duration-200 hover:border-surface-300 dark:hover:border-surface-700"
+                <span className="text-xs text-gray-500">
+                  {featureGraph.nodes.length} nodes · {featureGraph.edges.length} connections
+                </span>
+              </div>
+
+              <div
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                style={{ height: '650px' }}
+              >
+                {reactFlowNodes.length > 0 ? (
+                  <ReactFlow
+                    nodes={reactFlowNodes}
+                    edges={reactFlowEdges}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    fitViewOptions={{ padding: 0.2 }}
+                    nodesConnectable={false}
+                    elementsSelectable={true}
                   >
-                    {/* Branch Header Row */}
-                    <div
-                      onClick={() => toggleMindMapBranch(branch.id)}
-                      className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none bg-surface-50/60 dark:bg-surface-800/40 hover:bg-surface-100/60 dark:hover:bg-surface-800/80 transition-colors"
-                    >
-                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                        <div className={`p-2.5 rounded-2xl border ${branch.badgeColor}`}>
-                          <IconComp className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-bold text-surface-900 dark:text-white">
-                              {branch.name}
-                            </h4>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-surface-200 dark:bg-surface-700 text-surface-700 dark:text-surface-300">
-                              {branch.fileCount} {branch.fileCount === 1 ? 'file' : 'files'}
-                            </span>
-                            {branch.symbolCount > 0 && (
-                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                                {branch.symbolCount} symbols
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-surface-500 mt-0.5 truncate">
-                            {branch.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-surface-400">
-                        <span className="text-xs font-semibold hidden sm:inline text-surface-500">
-                          {isExpanded ? 'Collapse' : 'Expand'}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronDown className="w-5 h-5 transition-transform" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5 transition-transform" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Branch Content / Level 2 Modules */}
-                    {isExpanded && (
-                      <div className="p-5 border-t border-surface-100 dark:border-surface-800 bg-white dark:bg-surface-900/50 space-y-3">
-                        {!branch.hasContent || !branch.modules || branch.modules.length === 0 ? (
-                          /* Strict Grounding Notice */
-                          <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-800/40 border border-dashed border-surface-200 dark:border-surface-700 text-xs text-surface-500 flex items-center gap-3">
-                            <Info className="w-4 h-4 text-surface-400 shrink-0" />
-                            <span>{branch.emptyNotice}</span>
-                          </div>
-                        ) : (
-                          /* Module Cards Grid */
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {branch.modules.map((mod) => {
-                              const isSelected = selectedMindMapModule?.path === mod.path;
-                              return (
-                                <div
-                                  key={mod.id}
-                                  onClick={() => setSelectedMindMapModule(mod)}
-                                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
-                                    isSelected
-                                      ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 shadow-xs'
-                                      : 'bg-surface-50/60 dark:bg-surface-800/40 border-surface-200 dark:border-surface-700/80 hover:border-surface-300 dark:hover:border-surface-600 hover:bg-surface-100/60'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <FileCode2 className={`w-4 h-4 shrink-0 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-surface-400'}`} />
-                                      <span className="text-xs font-bold font-mono text-surface-900 dark:text-white truncate">
-                                        {mod.name}
-                                      </span>
-                                    </div>
-                                    <span className="text-[10px] font-mono text-surface-500 shrink-0">
-                                      {mod.lines} lines
-                                    </span>
-                                  </div>
-
-                                  <div className="text-[11px] font-mono text-surface-500 truncate" title={mod.path}>
-                                    {mod.path}
-                                  </div>
-
-                                  <div className="flex items-center justify-between pt-1 border-t border-surface-200/60 dark:border-surface-700/60 text-[10px] font-mono">
-                                    <span className="text-surface-400">{mod.sizeFormatted}</span>
-                                    <div className="flex items-center gap-1.5">
-                                      {mod.symbols && mod.symbols.length > 0 && (
-                                        <span className="px-1.5 py-0.5 rounded bg-surface-200 dark:bg-surface-700 text-surface-700 dark:text-surface-300 font-semibold">
-                                          {mod.symbols.length} {mod.symbols.length === 1 ? 'symbol' : 'symbols'}
-                                        </span>
-                                      )}
-                                      {mod.imports && mod.imports.length > 0 && (
-                                        <span className="px-1.5 py-0.5 rounded bg-surface-200 dark:bg-surface-700 text-surface-600 dark:text-surface-400">
-                                          {mod.imports.length} imports
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <Background />
+                    <Controls />
+                    <MiniMap />
+                  </ReactFlow>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                    No feature relationships were detected in this project.
                   </div>
-                );
-              })}
+                )}
+              </div>
             </div>
+
           </div>
 
           {/* Module Inspector Side-Drawer (Right 1 col) */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-lg p-5 space-y-5">
-              
+
               {/* Drawer Header */}
               <div className="flex items-start justify-between gap-3 pb-3 border-b border-surface-100 dark:border-surface-800">
                 <div>
@@ -1817,7 +1812,7 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
       {/* 4. SECTION: REAL FEATURE BREAKDOWN */}
       {activeTab === 'features' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          
+
           {/* Header Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -1943,13 +1938,52 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
             </div>
           )}
 
+          {/* Interactive Mind Map */}
+          <div className="mt-8 p-6 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs">
+            <h3 className="text-lg font-extrabold text-surface-900 dark:text-white mb-2">
+              Interactive Mind Map
+            </h3>
+
+            <p className="text-xs text-surface-500 mb-5">
+              Explore how your project's features connect to components, functions, and APIs.
+            </p>
+
+            {featureGraph?.nodes?.filter(node => node.type === 'feature').map(feature => {
+              const children = featureGraph.nodes.filter(
+                node => node.featureId === feature.id
+              );
+
+              return (
+                <div key={feature.id} className="p-4 mb-3 rounded-xl border border-surface-200 dark:border-surface-700">
+                  <h4 className="font-bold text-sm text-surface-900 dark:text-white">
+                    {feature.label}
+                  </h4>
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {children.map(child => (
+                      <span key={child.id} className="px-3 py-1.5 rounded-lg text-xs bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                        {child.label}
+                      </span>
+                    ))}
+
+                    {children.length === 0 && (
+                      <span className="text-xs text-surface-400">
+                        No connected components detected.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
         </div>
       )}
 
       {/* 5. SECTION: FUNCTION & API DIRECTORY */}
       {activeTab === 'functions' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          
+
           {/* Top Search & Filter Bar */}
           <div className="p-6 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2003,11 +2037,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                     key={item.key}
                     type="button"
                     onClick={() => setFunctionLayerFilter(item.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      functionLayerFilter === item.key
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${functionLayerFilter === item.key
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                      }`}
                   >
                     {item.label}
                   </button>
@@ -2110,12 +2143,11 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
       {/* 6. SECTION A: REACT FLOW INTERACTIVE MIND MAP & CLUSTERED GRAPH */}
       {activeTab === 'diagram' && (
         <div className="h-[750px] w-full relative bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-xs flex animate-in fade-in duration-150">
-          
+
           {/* 1. LEFT SIDEBAR FILE TREE (260px) */}
           <div
-            className={`${
-              isSidebarOpen ? 'w-[260px]' : 'w-0'
-            } shrink-0 transition-all duration-200 border-r border-slate-200 bg-white flex flex-col justify-between overflow-hidden z-20 select-none`}
+            className={`${isSidebarOpen ? 'w-[260px]' : 'w-0'
+              } shrink-0 transition-all duration-200 border-r border-slate-200 bg-white flex flex-col justify-between overflow-hidden z-20 select-none`}
           >
             {/* Top Search Filter */}
             <div className="p-3 border-b border-slate-200 bg-slate-50/70">
@@ -2204,11 +2236,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                               <div
                                 key={file.nodeId}
                                 onClick={() => centerOnNode(file)}
-                                className={`group flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-colors text-[11px] ${
-                                  isSelected
-                                    ? 'bg-indigo-50 text-indigo-700 font-bold'
-                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                } ${isHidden ? 'opacity-40 line-through' : ''}`}
+                                className={`group flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-colors text-[11px] ${isSelected
+                                  ? 'bg-indigo-50 text-indigo-700 font-bold'
+                                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                  } ${isHidden ? 'opacity-40 line-through' : ''}`}
                               >
                                 <div className="flex items-center gap-1.5 min-w-0">
                                   <FileCode2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -2252,7 +2283,7 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
 
           {/* 2. MAIN REACT FLOW CANVAS */}
           <div className="flex-1 h-full relative">
-            
+
             {/* Sidebar Toggle Button (floating top-left of canvas) */}
             <button
               type="button"
@@ -2304,11 +2335,16 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
             {/* ReactFlow Component */}
             <ReactFlow
               nodes={displayNodes}
-              edges={flowEdges}
+              edges={displayEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               nodeTypes={nodeTypes}
               onInit={setRfInstance}
+              onNodeClick={(_, node) => {
+                if (node.type === 'filePill') {
+                  setSelectedFileId(node.id);
+                }
+              }}
               fitView
               fitViewOptions={{ padding: 0.2 }}
               minZoom={0.25}
@@ -2336,7 +2372,7 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
       {/* 4. SECTION B: EXPANDABLE FOLDER TREE */}
       {activeTab === 'tree' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
-          
+
           {/* Left Tree Explorer (2 cols) */}
           <div className="lg:col-span-2 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-surface-100 dark:border-surface-800">
@@ -2366,11 +2402,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                         toggleFolder(rootItem.id);
                         setSelectedFolderId(rootItem.id);
                       }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-colors ${
-                        isRootSelected
-                          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
-                          : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-800 dark:text-surface-200'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-colors ${isRootSelected
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
+                        : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-800 dark:text-surface-200'
+                        }`}
                     >
                       {isRootOpen ? (
                         <ChevronDown className="w-4 h-4 text-surface-400" />
@@ -2400,11 +2435,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                                     toggleFolder(child.id);
                                     setSelectedFolderId(child.id);
                                   }}
-                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer transition-colors ${
-                                    isChildSelected
-                                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
-                                      : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-700 dark:text-surface-300'
-                                  }`}
+                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer transition-colors ${isChildSelected
+                                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
+                                    : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-700 dark:text-surface-300'
+                                    }`}
                                 >
                                   {isChildOpen ? (
                                     <ChevronDown className="w-3.5 h-3.5 text-surface-400" />
@@ -2422,11 +2456,10 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                                       <div
                                         key={sub.id}
                                         onClick={() => setSelectedFolderId(sub.id)}
-                                        className={`flex items-center gap-2 px-3 py-1 rounded-lg cursor-pointer ${
-                                          selectedFolderId === sub.id
-                                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
-                                            : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-600 dark:text-surface-400'
-                                        }`}
+                                        className={`flex items-center gap-2 px-3 py-1 rounded-lg cursor-pointer ${selectedFolderId === sub.id
+                                          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 font-bold'
+                                          : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-600 dark:text-surface-400'
+                                          }`}
                                       >
                                         <FileCode2 className="w-3.5 h-3.5 text-cyan-500" />
                                         <span>{sub.name}</span>
@@ -2524,7 +2557,7 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
       {/* 5. SECTION C: COMPONENT & DEPENDENCY MAP */}
       {activeTab === 'dependencies' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          
+
           {/* Sub-Section 1: Inter-Module Connections */}
           <div className="p-6 rounded-3xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-surface-100 dark:border-surface-800">
@@ -2626,15 +2659,14 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
                   >
                     <div className="flex items-center gap-2.5">
                       <span
-                        className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                          route.method === 'GET'
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                            : route.method === 'POST'
+                        className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${route.method === 'GET'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                          : route.method === 'POST'
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                             : route.method === 'PATCH' || route.method === 'PUT'
-                            ? 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                            : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-                        }`}
+                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                              : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                          }`}
                       >
                         {route.method}
                       </span>
@@ -2756,7 +2788,7 @@ Security: 100% Static Scan Passed (Secrets & node_modules excluded)`;
         </div>
       )}
 
-          {/* Floating AI Codebase Copilot Toggle Button */}
+      {/* Floating AI Codebase Copilot Toggle Button */}
       <button
         type="button"
         onClick={() => setIsBotOpen(!isBotOpen)}
