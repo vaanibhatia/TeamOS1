@@ -68,9 +68,17 @@ export default function App() {
   // Selected role for the dedicated full-page Login screen transition
   const [authRole, setAuthRole] = useState(null);
 
-  // 2. Active Employee ID (when in Employee workspace)
-  // Default to first employee (Rahul Sharma: 'usr_001')
+  // 2. Active Employee ID (when in Employee or Event Member workspace)
+  // Default to first employee (Rahul Sharma: 'usr_001' or Marcus Vance: 'usr_event_001')
   const [activeEmployeeId, setActiveEmployeeId] = useState('usr_001');
+
+  React.useEffect(() => {
+    if (currentRole === 'event_member') {
+      setActiveEmployeeId('usr_event_001');
+    } else if (currentRole === 'employee' && activeEmployeeId.startsWith('usr_event')) {
+      setActiveEmployeeId('usr_001');
+    }
+  }, [currentRole]);
 
   // 3. Navigation View State
   const [currentView, setCurrentView] = useState(() => {
@@ -210,7 +218,7 @@ export default function App() {
             setCurrentRole(role);
             setCurrentUser({ role, email });
             setAuthRole(null);
-            setCurrentView('home');
+            setCurrentView(role === 'developer' ? 'project-architecture' : 'home');
           }}
         />
       );
@@ -259,8 +267,8 @@ export default function App() {
           onSelectMeeting={handleSelectMeeting}
           onViewAllMeetings={() => setCurrentView('meetings')}
           onNavigateWorkflow={() => {
-            if (currentRole === 'manager') setCurrentView('manager-approvals');
-            else if (currentRole === 'employee') setCurrentView('employee-pending');
+            if (currentRole === 'manager' || currentRole === 'event_manager') setCurrentView('manager-approvals');
+            else if (currentRole === 'employee' || currentRole === 'event_member') setCurrentView('employee-pending');
             else setCurrentView('student-tasks');
           }}
           onNavigate={setCurrentView}
@@ -287,7 +295,7 @@ export default function App() {
       )}
 
       {/* 4. MANAGER WORKSPACE SUB-VIEWS */}
-      {currentRole === 'manager' && currentView === 'manager-approvals' && (
+      {(currentRole === 'manager' || currentRole === 'event_manager') && currentView === 'manager-approvals' && (
         <ManagerWorkspaceView
           subView="approvals"
           tasks={tasks}
@@ -298,7 +306,7 @@ export default function App() {
         />
       )}
 
-      {currentRole === 'manager' && currentView === 'manager-pending' && (
+      {(currentRole === 'manager' || currentRole === 'event_manager') && currentView === 'manager-pending' && (
         <ManagerWorkspaceView
           subView="pending"
           tasks={tasks}
@@ -309,7 +317,7 @@ export default function App() {
         />
       )}
 
-      {currentRole === 'manager' && currentView === 'manager-completed' && (
+      {(currentRole === 'manager' || currentRole === 'event_manager') && currentView === 'manager-completed' && (
         <ManagerWorkspaceView
           subView="completed"
           tasks={tasks}
@@ -321,7 +329,7 @@ export default function App() {
       )}
 
       {/* 5. EMPLOYEE WORKSPACE SUB-VIEWS */}
-      {currentRole === 'employee' && currentView === 'employee-pending' && (
+      {(currentRole === 'employee' || currentRole === 'event_member') && currentView === 'employee-pending' && (
         <EmployeeWorkspaceView
           subView="pending"
           tasks={tasks}
@@ -333,7 +341,7 @@ export default function App() {
         />
       )}
 
-      {currentRole === 'employee' && currentView === 'employee-in-progress' && (
+      {(currentRole === 'employee' || currentRole === 'event_member') && currentView === 'employee-in-progress' && (
         <EmployeeWorkspaceView
           subView="in-progress"
           tasks={tasks}
@@ -345,7 +353,7 @@ export default function App() {
         />
       )}
 
-      {currentRole === 'employee' && currentView === 'employee-completed' && (
+      {(currentRole === 'employee' || currentRole === 'event_member') && currentView === 'employee-completed' && (
         <EmployeeWorkspaceView
           subView="completed"
           tasks={tasks}
@@ -357,7 +365,7 @@ export default function App() {
         />
       )}
 
-      {currentRole === 'employee' && currentView === 'employee-blocked' && (
+      {(currentRole === 'employee' || currentRole === 'event_member') && currentView === 'employee-blocked' && (
         <EmployeeWorkspaceView
           subView="blocked"
           tasks={tasks}
@@ -370,7 +378,7 @@ export default function App() {
       )}
 
       {/* 6. SHARED DEPENDENCY GRAPH VIEW (Manager & Employee only) */}
-      {(currentRole === 'manager' || currentRole === 'employee') && currentView === 'dependency-graph' && (
+      {(currentRole === 'manager' || currentRole === 'employee' || currentRole === 'event_manager' || currentRole === 'event_member') && currentView === 'dependency-graph' && (
         <TaskDependencyGraph
           currentRole={currentRole}
           activeEmployeeId={activeEmployeeId}
@@ -408,7 +416,7 @@ export default function App() {
       )}
 
       {/* 8. DEDICATED DEVELOPER WORKSPACE (Architecture Graph, Code Task Board, Blocker Radar) */}
-      {currentRole === 'developer' && (currentView === 'home' || currentView === 'developer-dashboard' || currentView.startsWith('dev-')) && (
+      {currentRole === 'developer' && (currentView.startsWith('dev-') || currentView === 'developer-dashboard') && (
         <DeveloperDashboard
           subView={currentView}
           onOpenEvidence={handleOpenEvidence}
@@ -434,14 +442,9 @@ export default function App() {
         />
       )}
 
-      {/* 11. PROJECT ARCHITECTURE (Developer Mode Only) */}
-      {currentRole === 'developer' && currentView === 'project-architecture' && (
+      {/* 11. PROJECT ARCHITECTURE (Developer Primary View) */}
+      {currentRole === 'developer' && (currentView === 'project-architecture' || currentView === 'home') && (
         <ProjectArchitectureView onNavigate={setCurrentView} />
-      )}
-
-      {/* 12. SOLUTION VIEW (Developer Mode Only) */}
-      {currentRole === 'developer' && currentView === 'solution' && (
-        <SolutionView onNavigate={setCurrentView} />
       )}
 
       {/* Manager Add Task Modal */}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+  CalendarDays,
+  Ticket,
   Layers,
   Home,
   Calendar,
@@ -85,6 +87,8 @@ export default function Sidebar({
     employee: { label: 'Employee Workspace', badge: 'Execution', icon: Users, color: 'text-emerald-500' },
     student: { label: 'Student Workspace', badge: 'Observer', icon: GraduationCap, color: 'text-violet-500' },
     developer: { label: 'Developer Workspace', badge: 'Tech Lead', icon: Terminal, color: 'text-cyan-500' },
+    event_manager: { label: 'Event Lead Workspace', badge: 'Planning & Ops', icon: CalendarDays, color: 'text-amber-500' },
+    event_member: { label: 'Event Crew Workspace', badge: 'On-Ground', icon: Sparkles, color: 'text-rose-500' },
   };
 
   const currentRoleInfo = roleLabels[currentRole] || roleLabels.manager;
@@ -93,26 +97,26 @@ export default function Sidebar({
   // Build role-specific sidebar items per specifications
   let navItems = [];
 
-  if (currentRole === 'manager') {
+  if (currentRole === 'manager' || currentRole === 'event_manager') {
     navItems = [
       { id: 'home', label: 'Home', icon: Home },
-      { id: 'manager-pending', label: 'Pending Tasks', icon: Clock, count: counts.managerPending },
-      { id: 'manager-completed', label: 'Completed Tasks', icon: CheckCircle2 },
-      { id: 'manager-approvals', label: 'Needs Approval', icon: AlertCircle, count: counts.needsApproval, highlight: counts.needsApproval > 0 },
-      { id: 'manager-add-task', label: 'Add Task', icon: PlusCircle, isAction: true },
+      { id: 'manager-pending', label: currentRole === 'event_manager' ? 'Pending Logistics' : 'Pending Tasks', icon: Clock, count: counts.managerPending },
+      { id: 'manager-completed', label: currentRole === 'event_manager' ? 'Completed Agendas' : 'Completed Tasks', icon: CheckCircle2 },
+      { id: 'manager-approvals', label: currentRole === 'event_manager' ? 'Approvals & Quotes' : 'Needs Approval', icon: AlertCircle, count: counts.needsApproval, highlight: counts.needsApproval > 0 },
+      { id: 'manager-add-task', label: currentRole === 'event_manager' ? 'Add Event Duty' : 'Add Task', icon: PlusCircle, isAction: true },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
-      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
+      { id: 'timeline', label: currentRole === 'event_manager' ? 'Run-of-Show' : 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
-  } else if (currentRole === 'employee') {
+  } else if (currentRole === 'employee' || currentRole === 'event_member') {
     navItems = [
       { id: 'home', label: 'Home', icon: Home },
-      { id: 'employee-pending', label: 'My Pending Tasks', icon: Clock, count: counts.employeePending },
+      { id: 'employee-pending', label: currentRole === 'event_member' ? 'My Event Duties' : 'My Pending Tasks', icon: Clock, count: counts.employeePending },
       { id: 'employee-in-progress', label: 'In Progress', icon: CheckSquare, count: counts.employeeInProgress },
       { id: 'employee-completed', label: 'Completed Tasks', icon: CheckCircle2 },
-      { id: 'employee-blocked', label: 'Blocked Tasks', icon: AlertTriangle, count: counts.employeeBlocked, danger: counts.employeeBlocked > 0 },
+      { id: 'employee-blocked', label: 'Blocked Items', icon: AlertTriangle, count: counts.employeeBlocked, danger: counts.employeeBlocked > 0 },
       { id: 'dependency-graph', label: 'Dependency Graph', icon: GitCommit },
-      { id: 'timeline', label: 'Timeline', icon: CalendarRange },
+      { id: 'timeline', label: currentRole === 'event_member' ? 'Run-of-Show' : 'Timeline', icon: CalendarRange },
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'student') {
@@ -125,11 +129,9 @@ export default function Sidebar({
       { id: 'discussions', label: 'Discussions', icon: MessageSquare, count: discussionCount },
     ];
   } else if (currentRole === 'developer') {
-    // Dedicated Developer Workspace: Architecture Graph, Code Task Board, Blocker Radar, Timeline, Discussions, Architecture & Solution
+    // Dedicated Developer Workspace: Project Architecture, Dependency Graph, Code Task Board, Blocker Radar, Timeline, Discussions
     navItems = [
-      { id: 'home', label: 'Developer Board', icon: Terminal },
       { id: 'project-architecture', label: 'Project Architecture', icon: FolderGit2 },
-      { id: 'solution', label: 'Solution', icon: FileCode2 },
       { id: 'dev-graph', label: 'Dependency Graph', icon: GitCommit },
       { id: 'dev-kanban', label: 'Code Task Board', icon: CheckSquare },
       { id: 'dev-blockers', label: 'Blocker Radar', icon: AlertTriangle, count: 2, danger: true },

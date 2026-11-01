@@ -522,33 +522,33 @@ export default function DeveloperDashboard({
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* SVG Canvas (Left 2 cols) */}
-            <div className="lg:col-span-2 rounded-3xl bg-slate-950 border border-slate-800 shadow-xl p-5 relative overflow-hidden min-h-[440px] flex flex-col justify-between">
+            {/* SVG Canvas (Left 2 cols) - Light Mode */}
+            <div className="lg:col-span-2 rounded-3xl bg-slate-50 border border-slate-200 shadow-sm p-5 relative overflow-hidden min-h-[440px] flex flex-col justify-between">
               
               {/* Graph Grid Pattern */}
               <div
-                className="absolute inset-0 opacity-15 pointer-events-none"
+                className="absolute inset-0 opacity-50 pointer-events-none"
                 style={{
                   backgroundImage:
-                    'radial-gradient(circle, #6366f1 1px, transparent 1px)',
+                    'radial-gradient(circle, #cbd5e1 1.2px, transparent 1.2px)',
                   backgroundSize: '24px 24px',
                 }}
               />
 
               {/* Status Header Legend inside Canvas */}
-              <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800/80">
-                <div className="flex items-center gap-4 flex-wrap">
+              <div className="relative z-10 flex items-center justify-between text-xs text-slate-600 pb-2 border-b border-slate-200">
+                <div className="flex items-center gap-4 flex-wrap font-medium">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400/50" />
-                    <span>Healthy Service</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/30" />
+                    <span className="text-slate-700">Healthy Service</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-xs shadow-amber-400/50" />
-                    <span>Warning / Degraded</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs shadow-amber-500/30" />
+                    <span className="text-slate-700">Warning / Degraded</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shadow-xs shadow-rose-500/50" />
-                    <span>Critical Path Blocker</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shadow-xs shadow-rose-500/30" />
+                    <span className="text-slate-700">Critical Path Blocker</span>
                   </div>
                 </div>
 
@@ -614,7 +614,7 @@ export default function DeveloperDashboard({
                     fill="none"
                     markerEnd="url(#arrow-healthy)"
                   />
-                  <text x="240" y="135" fill="#94A3B8" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                  <text x="240" y="135" fill="#475569" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="600">
                     HTTPS REST
                   </text>
 
@@ -626,7 +626,7 @@ export default function DeveloperDashboard({
                     fill="none"
                     markerEnd="url(#arrow-warning)"
                   />
-                  <text x="210" y="270" fill="#F59E0B" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
+                  <text x="210" y="270" fill="#D97706" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
                     WSS (502 Gateway Lag)
                   </text>
 
@@ -647,7 +647,7 @@ export default function DeveloperDashboard({
                     fill="none"
                     markerEnd="url(#arrow-healthy)"
                   />
-                  <text x="475" y="195" fill="#94A3B8" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                  <text x="475" y="195" fill="#475569" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="600">
                     SQL Queries
                   </text>
 
@@ -659,7 +659,7 @@ export default function DeveloperDashboard({
                     fill="none"
                     markerEnd="url(#arrow-healthy)"
                   />
-                  <text x="710" y="65" fill="#94A3B8" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                  <text x="710" y="65" fill="#475569" fontSize="10" textAnchor="middle" fontFamily="monospace" fontWeight="600">
                     Session TTL
                   </text>
 
@@ -674,25 +674,23 @@ export default function DeveloperDashboard({
                   />
                   {/* Blocker Pill on Connection */}
                   <g transform="translate(475, 315)">
-                    <rect x="-70" y="-12" width="140" height="20" rx="10" fill="#881337" stroke="#F43F5E" strokeWidth="1" />
-                    <text x="0" y="2" fill="#FFE4E6" fontSize="9" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
+                    <rect x="-75" y="-12" width="150" height="22" rx="11" fill="#FFF1F2" stroke="#FDA4AF" strokeWidth="1.5" />
+                    <text x="0" y="3" fill="#BE123C" fontSize="9.5" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
                       ⚠ Blocked: S3 IAM Policy
                     </text>
                   </g>
 
-                  {/* Render Module Node Boxes */}
+                  {/* Render Module Node Boxes - Light Mode */}
                   {ARCHITECTURE_MODULES.map((mod) => {
                     const isSelected = mod.id === selectedModuleId;
                     const isBlocked = mod.status === 'blocked';
                     const isWarning = mod.status === 'bottleneck';
 
-                    let strokeColor = '#334155';
-                    let bgColor = '#0F172A';
-                    let badgeBg = '#1E293B';
-                    let badgeColor = '#94A3B8';
+                    let strokeColor = '#E2E8F0';
+                    let bgColor = '#FFFFFF';
 
                     if (isSelected) {
-                      strokeColor = '#818CF8';
+                      strokeColor = '#4F46E5';
                     } else if (isBlocked) {
                       strokeColor = '#F43F5E';
                     } else if (isWarning) {
@@ -715,10 +713,10 @@ export default function DeveloperDashboard({
                             height="73"
                             rx="18"
                             fill="none"
-                            stroke="#818CF8"
+                            stroke="#4F46E5"
                             strokeWidth="2.5"
-                            strokeOpacity="0.8"
-                            filter="drop-shadow(0 0 10px rgba(99, 102, 241, 0.5))"
+                            strokeOpacity="0.7"
+                            filter="drop-shadow(0 4px 12px rgba(79, 70, 229, 0.25))"
                           />
                         )}
 
@@ -731,8 +729,9 @@ export default function DeveloperDashboard({
                           rx="14"
                           fill={bgColor}
                           stroke={strokeColor}
-                          strokeWidth={isSelected ? '2' : '1.5'}
+                          strokeWidth={isSelected ? '2.5' : '1.5'}
                           className="transition-all"
+                          filter={isSelected ? 'none' : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.04))'}
                         />
 
                         {/* Status Indicator Dot */}
@@ -754,7 +753,7 @@ export default function DeveloperDashboard({
                         <text
                           x="30"
                           y="24"
-                          fill="#F8FAFC"
+                          fill="#0F172A"
                           fontSize="12"
                           fontWeight="bold"
                           fontFamily="sans-serif"
@@ -766,7 +765,7 @@ export default function DeveloperDashboard({
                         <text
                           x="18"
                           y="42"
-                          fill="#94A3B8"
+                          fill="#475569"
                           fontSize="9.5"
                           fontFamily="monospace"
                         >
@@ -790,11 +789,11 @@ export default function DeveloperDashboard({
               </div>
 
               {/* Bottom Canvas Notice */}
-              <div className="relative z-10 pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+              <div className="relative z-10 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
                 <span className="font-mono text-[11px]">
                   Showing 7 live topology nodes • Directed arrows indicate dependency flow
                 </span>
-                <span className="text-[11px] text-brand-400 font-semibold">
+                <span className="text-[11px] text-brand-600 font-semibold">
                   Active Selected: {selectedModule.label}
                 </span>
               </div>

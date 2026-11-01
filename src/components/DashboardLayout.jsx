@@ -68,8 +68,6 @@ export default function DashboardLayout({
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-surface-400 gap-2">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-surface-700 dark:text-surface-300">Syncora Platform</span>
-                <span>•</span>
-                <span>Technical Contract v1.0 Compliant</span>
               </div>
               <div>AI-Powered Meeting Management & Intelligence</div>
             </div>

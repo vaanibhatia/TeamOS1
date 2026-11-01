@@ -105,8 +105,49 @@ export const DEMO_ANALYSIS_DATA = {
     'Faster-Whisper',
     'Tailwind CSS',
   ],
+  database: {
+    type: 'PostgreSQL 15',
+    file: 'database/schema/001_initial_schema.sql',
+    models: ['Meeting', 'Task', 'Decision', 'TranscriptChunk', 'User', 'AuditLog'],
+    tables: ['meetings', 'tasks', 'decisions', 'transcript_chunks', 'users', 'audit_logs'],
+  },
   nodes: [],
-  fileTree: [],
+  fileTree: [
+    { name: 'package.json', path: 'package.json', type: 'file' },
+    { name: 'dashboard/src/main.jsx', path: 'dashboard/src/main.jsx', type: 'file' },
+    { name: 'dashboard/src/App.jsx', path: 'dashboard/src/App.jsx', type: 'file' },
+    { name: 'backend/api-gateway/server.js', path: 'backend/api-gateway/server.js', type: 'file' },
+    { name: 'backend/auth-service/index.js', path: 'backend/auth-service/index.js', type: 'file' },
+    { name: 'database/schema/001_initial_schema.sql', path: 'database/schema/001_initial_schema.sql', type: 'file' },
+    { name: 'worker/whisper-pipeline/worker.py', path: 'worker/whisper-pipeline/worker.py', type: 'file' },
+  ],
+  keySnippets: [
+    {
+      path: 'package.json',
+      fileName: 'package.json',
+      snippet: '{\n  "name": "syncora-monorepo",\n  "version": "1.0.0",\n  "dependencies": {\n    "react": "^18.3.1",\n    "express": "^4.19.2",\n    "@prisma/client": "^5.14.0",\n    "redis": "^4.6.13",\n    "jsonwebtoken": "^9.0.2"\n  }\n}',
+    },
+    {
+      path: 'backend/api-gateway/server.js',
+      fileName: 'server.js',
+      snippet: 'const express = require("express");\nconst app = express();\napp.use("/api/v1/meetings", meetingsRouter);\napp.use("/api/v1/tasks", tasksRouter);\napp.use("/api/v1/auth", authRouter);\napp.listen(5000);',
+    },
+    {
+      path: 'backend/auth-service/index.js',
+      fileName: 'index.js',
+      snippet: 'const jwt = require("jsonwebtoken");\nrouter.post("/login", async (req, res) => {\n  const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET);\n  res.cookie("token", token, { httpOnly: true, sameSite: "strict", secure: true });\n  return res.json({ success: true, user });\n});',
+    },
+    {
+      path: 'database/schema/001_initial_schema.sql',
+      fileName: '001_initial_schema.sql',
+      snippet: 'CREATE TABLE meetings (\n  id UUID PRIMARY KEY,\n  title VARCHAR(255),\n  created_at TIMESTAMP\n);\nCREATE TABLE tasks (\n  id UUID PRIMARY KEY,\n  meeting_id UUID REFERENCES meetings(id),\n  assignee_id VARCHAR(100),\n  approval_status VARCHAR(50)\n);',
+    },
+    {
+      path: 'dashboard/src/main.jsx',
+      fileName: 'main.jsx',
+      snippet: 'import React from "react";\nimport ReactDOM from "react-dom/client";\nimport App from "./App.jsx";\nReactDOM.createRoot(document.getElementById("root")).render(<App />);',
+    },
+  ],
   securityExclusions: {
     status: 'passed',
     secretsFound: 0,

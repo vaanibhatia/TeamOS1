@@ -92,11 +92,6 @@ export default function HomePage({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white/90 text-xs font-semibold mb-3 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span className="capitalize">{currentRole} Workspace Active</span>
-            </div>
-
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               {greeting}, {currentUser.name.split(' ')[0]}! 👋
             </h1>
@@ -104,27 +99,23 @@ export default function HomePage({
             <p className="mt-2 text-sm sm:text-base text-brand-100 max-w-2xl leading-relaxed">
               {currentRole === 'manager' &&
                 'Review AI-extracted commitments, triage pending task deadlines, and keep team deliverables aligned with recorded evidence.'}
+              {currentRole === 'event_manager' &&
+                'Approve run-of-show agendas, coordinate stage and vendor commitments, and verify logistics deliverables.'}
               {currentRole === 'employee' &&
                 'Track your personal action items, verify deadlines against spoken audio quotes, and update task progress in real time.'}
+              {currentRole === 'event_member' &&
+                'View your assigned event duties, run-of-show logistics schedule, and report on-ground blockers in real time.'}
               {currentRole === 'student' &&
                 'Explore engineering architecture rationales, study unaddressed technical questions, and track your learning progress.'}
             </p>
           </div>
 
-          {/* Quick Date Card / Action */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-xs text-white">
-              <div className="text-white/70 font-medium">Platform Status</div>
-              <div className="text-sm font-bold flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>AI Pipeline Active</span>
-              </div>
-            </div>
-
+          {/* Quick Action */}
+          <div className="flex items-center">
             <button
               type="button"
               onClick={onViewAllMeetings}
-              className="px-4 py-2.5 rounded-2xl bg-white text-surface-900 hover:bg-white/90 font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-white text-surface-900 hover:bg-white/90 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
             >
               <span>View All Meetings</span>
               <ArrowRight className="w-4 h-4 text-brand-600" />
@@ -144,8 +135,8 @@ export default function HomePage({
           </span>
         </div>
 
-        {/* Manager Stats */}
-        {currentRole === 'manager' && (
+        {/* Manager & Event Manager Stats */}
+        {(currentRole === 'manager' || currentRole === 'event_manager') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
               onClick={() => onViewAllMeetings()}
@@ -207,8 +198,8 @@ export default function HomePage({
           </div>
         )}
 
-        {/* Employee Stats */}
-        {currentRole === 'employee' && (
+        {/* Employee & Event Crew Stats */}
+        {(currentRole === 'employee' || currentRole === 'event_member') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
               onClick={() => onNavigate('employee-pending')}

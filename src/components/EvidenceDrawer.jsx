@@ -19,7 +19,7 @@ function formatTimestamp(timeStr) {
 
 export default function EvidenceDrawer({
   isOpen = false,
-  onClose = () => {},
+  onClose = () => { },
   transcripts = [],
   highlightSegmentIds = [],
 }) {
@@ -162,11 +162,10 @@ export default function EvidenceDrawer({
                     key={segment.segmentId}
                     ref={isFirstMatch ? highlightedRef : null}
                     id={`evidence-seg-${segment.segmentId}`}
-                    className={`p-4 rounded-xl transition-all duration-200 ${
-                      isHighlighted
+                    className={`p-4 rounded-xl transition-all duration-200 ${isHighlighted
                         ? 'bg-amber-500/10 border-l-4 border-amber-500 border-t border-r border-b border-amber-500/30 dark:border-amber-500/40 shadow-sm ring-1 ring-amber-500/20'
                         : 'bg-surface-50/70 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-800/80 hover:border-surface-300 dark:hover:border-surface-700'
-                    }`}
+                      }`}
                   >
                     {/* Item meta header: [mm:ss], speakerId, and badge */}
                     <div className="flex items-center justify-between gap-2 mb-2">
@@ -196,11 +195,10 @@ export default function EvidenceDrawer({
 
                     {/* Speech text */}
                     <p
-                      className={`text-sm leading-relaxed ${
-                        isHighlighted
+                      className={`text-sm leading-relaxed ${isHighlighted
                           ? 'font-bold text-surface-900 dark:text-amber-100'
                           : 'font-normal text-surface-700 dark:text-surface-300'
-                      }`}
+                        }`}
                     >
                       "{segment.text}"
                     </p>
@@ -213,7 +211,7 @@ export default function EvidenceDrawer({
           {/* Footer */}
           <div className="px-6 py-4 border-t border-surface-200 dark:border-surface-800 bg-surface-50/50 dark:bg-surface-900 flex items-center justify-between">
             <span className="text-xs text-surface-400">
-              Technical Contract v1.0 • Verifiable Evidence
+              Technical Contract v1.0
             </span>
             <button
               type="button"
